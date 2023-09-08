@@ -36,7 +36,7 @@ class CorwinSchultz :
         gamma = np.log(high_bars / low_bars) ** 2
         return gamma
     @staticmethod
-    def alpha(self, beta, gamma):
+    def alpha(beta, gamma):
         denominator = 3 - (2 * np.sqrt(2))
         beta_term = (np.sqrt(2) - 1) * np.sqrt(beta) / denominator
         gamma_term = np.sqrt(gamma / denominator)
