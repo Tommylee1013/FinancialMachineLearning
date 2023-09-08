@@ -1,0 +1,88 @@
+import numpy as np
+import pandas as pd
+from sklearn.linear_model import LinearRegression
+
+def TickRule(price : pd.Series) :
+    price_change = price.diff()
+    aggressor = pd.Series(index = price.index, data = np.nan)
+
+    aggressor.iloc[0] = 1
+    aggressor[price_change < 0] = -1
+    aggressor[price_change > 0] = 1
+    aggressor = aggressor.fillna(method = 'ffill')
+    return aggressor
+def RollModel(price : pd.Series) :
+    price_change = price.diff()
+    autocorr = price_change.autocorr(lag = 1)
+    spread_squared = np.max([-autocorr, 0])
+    spread = np.sqrt(spread_squared)
+    noise = price_change.var() - 2 * (spread ** 2)
+    return spread, noise
+def RangeVolatility(high, low, window):
+    log_high_low = np.log(high / low)
+    volatility = log_high_low.rolling(window = window).mean() / np.sqrt(8. / np.pi)
+    return volatility
+class CorwinShultz(object) :
+    @staticmethod
+    def beta(high, low, length) :
+        range_log = np.log(high / low) ** 2
+        sum_neighbors = range_log.rolling(window = 2).sum()
+        beta = sum_neighbors.rolling(window = length).mean()
+        return beta
+    @staticmethod
+    def gamma(high, low):
+        high_bars = high.rolling(window = 2).max()
+        low_bars = low.rolling(window = 2).min()
+        gamma = np.log(high_bars / low_bars) ** 2
+        return gamma
+    @staticmethod
+    def alpha(self, beta, gamma):
+        denominator = 3 - (2 * np.sqrt(2))
+        beta_term = (np.sqrt(2) - 1) * np.sqrt(beta) / denominator
+        gamma_term = np.sqrt(gamma / denominator)
+        alpha = beta_term - gamma_term
+        alpha[alpha < 0] = 0
+        return alpha
+    @staticmethod
+    def BeckerParkinsonVolatility(beta, gamma):
+        k2 = np.sqrt(8 / np.pi)
+        denominator = 3 - 2 ** 1.5
+        beta_term = (2 ** (-0.5) -1) * np.sqrt(beta) / (k2 * denominator)
+        gamma_term = np.sqrt(gamma / (k2 ** 2 * denominator))
+        volatility = beta_term + gamma_term
+        volatility[volatility < 0] = 0
+        return volatility
+def kyleLambda(price : pd.Series,
+               volume : pd.Series,
+               signs,
+               regressor = LinearRegression()):
+    price_change = price.diff()
+    net_order_flow = signs * volume
+    x_val   = net_order_flow.values[1:].reshape(-1, 1)
+    y_val = price_change.dropna().values
+    lambda_ = regressor.fit(x_val  , y_val)
+    return lambda_.coef_[0]
+def amihudLambda(price : pd.Series,
+                 volume : pd.Series,
+                 regressor = LinearRegression()):
+    log_price = np.log(price)
+    abs_diff = np.abs(log_price.diff())
+    x = volume.values[1:].reshape(-1, 1)
+    y = abs_diff.dropna()
+    lambda_ = regressor.fit(x, y)
+    return lambda_.coef_[0]
+def hasbrouckLambda(price : pd.Series,
+                    volume : pd.Series,
+                    sign) :
+    lambda_ = (np.sqrt(price * volume) * sign).sum()
+    return lambda_
+def vpin(buy : pd.Series,
+         sell : pd.Series,
+         volume : pd.Series,
+         num_bars : int) :
+    abs_diff = (buy - sell).abs()
+    estimated_vpin = abs_diff.rolling(window = num_bars).mean() / volume
+    return estimated_vpin
+def dollarVolume(price, volume) :
+    dollarVol = (price * volume).sum()
+    return dollarVol
