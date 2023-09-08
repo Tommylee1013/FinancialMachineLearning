@@ -22,7 +22,7 @@ def RangeVolatility(high, low, window):
     log_high_low = np.log(high / low)
     volatility = log_high_low.rolling(window = window).mean() / np.sqrt(8. / np.pi)
     return volatility
-class CorwinShultz(object) :
+class CorwinSchultz :
     @staticmethod
     def beta(high, low, length) :
         range_log = np.log(high / low) ** 2
@@ -52,6 +52,20 @@ class CorwinShultz(object) :
         volatility = beta_term + gamma_term
         volatility[volatility < 0] = 0
         return volatility
+
+def CorwinSchultzSpread(high, low, sample_length=1):
+    beta = CorwinSchultz.beta(high, low, sample_length)
+    gamma = CorwinSchultz.gamma(high, low)
+    alpha = CorwinSchultz.alpha(beta, gamma)
+    spread = 2 * (np.exp(alpha) - 1) / (1 + np.exp(alpha))
+    return spread
+
+def BeckerParkinsonVolatility(high, low, sample_length=1):
+    beta = CorwinSchultz.beta(high, low, sample_length)
+    gamma = CorwinSchultz.gamma(high, low)
+    volatility = CorwinSchultz.BeckerParkinsonVolatility(beta, gamma)
+    return volatility
+
 def kyleLambda(price : pd.Series,
                volume : pd.Series,
                signs,
@@ -62,6 +76,7 @@ def kyleLambda(price : pd.Series,
     y_val = price_change.dropna().values
     lambda_ = regressor.fit(x_val  , y_val)
     return lambda_.coef_[0]
+
 def amihudLambda(price : pd.Series,
                  volume : pd.Series,
                  regressor = LinearRegression()):
@@ -71,11 +86,13 @@ def amihudLambda(price : pd.Series,
     y = abs_diff.dropna()
     lambda_ = regressor.fit(x, y)
     return lambda_.coef_[0]
+
 def hasbrouckLambda(price : pd.Series,
                     volume : pd.Series,
                     sign) :
     lambda_ = (np.sqrt(price * volume) * sign).sum()
     return lambda_
+
 def vpin(buy : pd.Series,
          sell : pd.Series,
          volume : pd.Series,
@@ -83,6 +100,7 @@ def vpin(buy : pd.Series,
     abs_diff = (buy - sell).abs()
     estimated_vpin = abs_diff.rolling(window = num_bars).mean() / volume
     return estimated_vpin
+
 def dollarVolume(price, volume) :
     dollarVol = (price * volume).sum()
     return dollarVol
