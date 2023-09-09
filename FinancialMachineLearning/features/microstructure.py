@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import LinearRegression
+import statsmodels.api as sm
 
 def TickRule(price : pd.Series) :
     price_change = price.diff()
@@ -72,9 +73,9 @@ def kyleLambda(price : pd.Series,
                regressor = LinearRegression()):
     price_change = price.diff()
     net_order_flow = signs * volume
-    x_val   = net_order_flow.values[1:].reshape(-1, 1)
+    x_val = net_order_flow.values[1:].reshape(-1, 1)
     y_val = price_change.dropna().values
-    lambda_ = regressor.fit(x_val  , y_val)
+    lambda_ = regressor.fit(x_val, y_val)
     return lambda_.coef_[0]
 
 def amihudLambda(price : pd.Series,
