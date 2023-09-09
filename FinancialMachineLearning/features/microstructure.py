@@ -87,10 +87,10 @@ class Lambda(object) :
         net_order_flow = signs * self._volume
         lambda_ = price_change / net_order_flow
         return lambda_
-    def aminud(self, dollar_value : pd.Series) -> pd.Series :
+    def aminud(self) -> pd.Series :
         log_price = np.log(self._price)
         abs_diff = np.abs(log_price.diff())
-        lambda_ = abs_diff / dollar_value
+        lambda_ = abs_diff / self._volume
         return lambda_
     def hasbrouck(self, signs : pd.Series ) -> pd.Series :
         log_price = np.log(self._price)
