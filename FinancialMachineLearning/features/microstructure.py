@@ -66,6 +66,39 @@ def BeckerParkinsonVolatility(high, low, sample_length=1):
     gamma = CorwinSchultz.gamma(high, low)
     volatility = CorwinSchultz.BeckerParkinsonVolatility(beta, gamma)
     return volatility
+class Lambda(object) :
+    def __init__(self, price, volume):
+        self._price = price
+        self._volume = volume
+    @property
+    def price(self):
+        return self._price
+    @price.setter
+    def price(self, price):
+        self._price = price
+    @property
+    def volume(self):
+        return self._volume
+    @volume.setter
+    def volume(self, volume):
+        self._volume
+    def kyle(self, signs : pd.Series) -> pd.Series :
+        price_change = self._price.diff()
+        net_order_flow = signs * self._volume
+        lambda_ = price_change / net_order_flow
+        return lambda_
+    def aminud(self, dollar_value : pd.Series) -> pd.Series :
+        log_price = np.log(self._price)
+        abs_diff = np.abs(log_price.diff())
+        lambda_ = abs_diff / dollar_value
+        return lambda_
+    def hasbrouck(self, signs : pd.Series ) -> pd.Series :
+        log_price = np.log(self._price)
+        log_diff = log_price.diff()
+        net_order_flow = signs * np.sqrt(self._volume)
+        lambda_ = log_diff / net_order_flow
+        return lambda_
+
 
 def kyleLambda(price : pd.Series,
                volume : pd.Series,
@@ -73,7 +106,7 @@ def kyleLambda(price : pd.Series,
                regressor = LinearRegression()):
     price_change = price.diff()
     net_order_flow = signs * volume
-    x_val = net_order_flow.values[1:].reshape(-1, 1)
+    x_val = net_order_flow.values[1:].reshape(-1, 1) # regression
     y_val = price_change.dropna().values
     lambda_ = regressor.fit(x_val, y_val)
     return lambda_.coef_[0]
@@ -93,6 +126,8 @@ def hasbrouckLambda(price : pd.Series,
                     sign) :
     lambda_ = (np.sqrt(price * volume) * sign).sum()
     return lambda_
+def hasbroucksFlow(tick_prices, tick_volumes, tick_sings):
+    return (np.sqrt(tick_prices * tick_volumes) * tick_sings).sum()
 
 def vpin(buy : pd.Series,
          sell : pd.Series,
