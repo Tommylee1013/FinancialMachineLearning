@@ -93,7 +93,6 @@ def beta(X: pd.DataFrame, y: pd.DataFrame) -> Tuple[np.array, np.array]:
     b_var = np.dot(err.T, err) / (X.shape[0] - X.shape[1]) * xx_inv
     return b_mean, b_var
 
-
 def sadf_outer_loop(X: pd.DataFrame, y: pd.DataFrame, min_length: int, molecule: list) -> pd.Series:
     sadf_series = pd.Series(index=molecule)
     for index in molecule:
