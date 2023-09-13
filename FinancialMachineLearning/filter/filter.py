@@ -20,3 +20,10 @@ def cusum_filter(raw_time_series, threshold, time_stamps=True):
         event_timestamps = pd.DatetimeIndex(t_events)
         return event_timestamps
     return t_events
+def z_score_filter(raw_time_series, mean_window, std_window, z_score=3, time_stamps=True):
+    t_events = raw_time_series[raw_time_series >= raw_time_series.rolling(window=mean_window).mean() +
+                               z_score * raw_time_series.rolling(window=std_window).std()].index
+    if time_stamps:
+        event_timestamps = pd.DatetimeIndex(t_events)
+        return event_timestamps
+    return t_events

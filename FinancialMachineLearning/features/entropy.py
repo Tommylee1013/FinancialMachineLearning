@@ -1,0 +1,82 @@
+import math
+from typing import Union
+import numpy as np
+
+def shannon_entropy(message : str) -> float :
+    exr = {}
+    entropy = 0
+    for i in message :
+        try : exr[i] += 1
+        except KeyError : exr[i] = 1
+    textlen = len(message)
+    for value in exr.values() :
+        freq = 1 * value / textlen
+        entropy += freq * math.log(freq) / math.log(2)
+    entropy *= -1
+    return entropy
+def lempel_ziv_entropy(message : str) -> float :
+    i, lib = 1, [message[0]]
+    while i < len(message) :
+        for j in range(i, len(message)) :
+            message_ = message[i:j+1]
+            if message_ not in lib :
+                lib.append(message_); break
+        i = j + 1
+    entropy = len(lib) / len(message)
+    return entropy
+def plugIn(message : str, word_length : int = None) -> float :
+    if word_length is None :
+        word_length = 1
+    pmf = prob_mass_function(message, word_length)
+    out = -sum([pmf[i] * np.log2(pmf[i]) for i in pmf]) / word_length
+    return out
+def prob_mass_function(message : str, word_length : int) -> dict :
+    lib = {}
+    if not isinstance(message, str) :
+        message = ''.join(map(str, message))
+    for i in range(word_length, len(message)) :
+        message_ = message[i - word_length : i]
+        if message_ not in lib : lib[message_] = [i - word_length]
+        else : lib[message_] = lib[message_] + [i - word_length]
+    pmf = float(len(message) - word_length)
+    pmf = {i : len(lib[i]) / pmf for i in lib}
+    return pmf
+def match_length(message : str, start_index : int, window : int) -> Union[int, str]:
+    sub_str = np.empty(shape=0)
+    for length in range(window):
+        msg1 = message[start_index: start_index + length + 1]
+        for j in range(start_index - window, start_index):
+            msg0 = message[j: j + length + 1]
+            if len(msg1) != len(msg0): continue
+            if msg1 == msg0:
+                sub_str = msg1
+                break
+    return len(sub_str) + 1, sub_str
+def konto_entropy(message: str, window: int = 0) -> float:
+    out = {
+        'h': 0,
+        'r': 0,
+        'num': 0,
+        'sum': 0,
+        'sub_str': []
+    }
+    if window <= 0:
+        points = range(1, len(message) // 2 + 1)
+    else:
+        window = min(window, len(message) // 2)
+        points = range(window, len(message) - window + 1)
+    for i in points:
+        if window <= 0:
+            length, msg_ = match_length(message, i, i)
+            out['sum'] += np.log2(i + 1) / length
+        else:
+            length, msg_ = match_length(message, i, window)
+            out['sum'] += np.log2(window + 1) / length
+        out['sub_str'].append(msg_)
+        out['num'] += 1
+    try:
+        out['h'] = out['sum'] / out['num']
+    except ZeroDivisionError:
+        out['h'] = 0
+    out['r'] = 1 - out['h'] / np.log2(len(message))
+    return out['h']
