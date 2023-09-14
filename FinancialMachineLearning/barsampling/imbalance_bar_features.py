@@ -119,31 +119,31 @@ class getImbalanceBar :
     @exp_num_ticks_init.setter
     def exp_num_ticks_init(self, value : int):
         self._exp_num_ticks_init = value
-def dollarImbalanceBar(self):
-    bars = ImbalanceBars(path = self._path,
-                         metric = 'dollar_imbalance',
-                         num_prev_bar = self._num_prev_bar,
-                         exp_num_ticks_init = self._exp_num_ticks_init,
-                         batch_size = self._batch_size,
-                         additional_features = self._additional_features)
-    imbalanceBar = bars.batch_run(verbose = self._verbose, to_csv = self._to_csv, output_path = self._output_path)
-    return imbalanceBar
-def get_volume_imbalance_bars(self):
-    bars = ImbalanceBars(path = self._path,
-                         metric = 'volume_imbalance',
-                         num_prev_bar = self._num_prev_bar,
-                         exp_num_ticks_init = self._exp_num_ticks_init,
-                         batch_size = self._batch_size,
-                         additional_features = self._additional_features)
-    imbalanceBar = bars.batch_run(verbose = self._verbose, to_csv = self._to_csv, output_path = self._output_path)
-    return imbalanceBar
-def get_tick_imbalance_bars(self):
-    bars = ImbalanceBars(path = self._path,
-                         metric = 'tick_imbalance',
-                         num_prev_bar = self._num_prev_bars,
-                         exp_num_ticks_init = self._exp_num_ticks_init,
-                         batch_size = self._batch_size,
-                         additional_features = self._additional_features)
-    imbalanceBar = bars.batch_run(verbose = self._verbose, to_csv = self._to_csv, output_path = self._output_path)
+    def dollar_imbalance_bar(self):
+        bars = ImbalanceBars(path = self._path,
+                             metric = 'dollar_imbalance',
+                             num_prev_bar = self._num_prev_bar,
+                             exp_num_ticks_init = self._exp_num_ticks_init,
+                             batch_size = self._batch_size,
+                             additional_features = self._additional_features)
+        imbalanceBar = bars.batch_run(verbose = self._verbose, to_csv = self._to_csv, output_path = self._output_path)
+        return imbalanceBar
+    def volume_imbalance_bar(self):
+        bars = ImbalanceBars(path = self._path,
+                             metric = 'volume_imbalance',
+                             num_prev_bar = self._num_prev_bar,
+                             exp_num_ticks_init = self._exp_num_ticks_init,
+                             batch_size = self._batch_size,
+                             additional_features = self._additional_features)
+        imbalanceBar = bars.batch_run(verbose = self._verbose, to_csv = self._to_csv, output_path = self._output_path)
+        return imbalanceBar
+    def tick_imbalance_bar(self):
+        bars = ImbalanceBars(path = self._path,
+                             metric = 'tick_imbalance',
+                             num_prev_bar = self._num_prev_bar,
+                             exp_num_ticks_init = self._exp_num_ticks_init,
+                             batch_size = self._batch_size,
+                             additional_features = self._additional_features)
+        imbalanceBar = bars.batch_run(verbose = self._verbose, to_csv = self._to_csv, output_path = self._output_path)
 
-    return imbalanceBar
+        return imbalanceBar
