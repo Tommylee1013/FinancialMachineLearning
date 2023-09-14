@@ -2,6 +2,76 @@ import math
 from typing import Union
 import numpy as np
 
+class discreteEntropy :
+    def __init__(self, message : str, word_length : int = None) :
+        self._message = message
+        self._word_length = word_length
+    @property
+    def word_length(self):
+        return self._word_length
+    @word_length.setter
+    def word_length(self, value):
+        self._word_length = value
+    def shannon(self) -> float :
+        exr = {}
+        entropy = 0
+        for i in self._message:
+            try:
+                exr[i] += 1
+            except KeyError:
+                exr[i] = 1
+        textlen = len(self._message)
+        for value in exr.values():
+            freq = 1 * value / textlen
+            entropy += freq * math.log(freq) / math.log(2)
+        entropy *= -1
+        return entropy
+    def lempel_ziv(self) -> float :
+        i, lib = 1, [self._message[0]]
+        while i < len(self._message):
+            for j in range(i, len(self._message)):
+                message_ = self._message[i:j + 1]
+                if message_ not in lib:
+                    lib.append(message_);
+                    break
+            i = j + 1
+        entropy = len(lib) / len(self._message)
+        return entropy
+    def plug_in(self) -> float :
+        if self._word_length is None:
+            self._word_length = 1
+        pmf = prob_mass_function(self._message, self._word_length)
+        out = -sum([pmf[i] * np.log2(pmf[i]) for i in pmf]) / self._word_length
+        return out
+    def konto(self, window: int = 0) -> float :
+        out = {
+            'h': 0,
+            'r': 0,
+            'num': 0,
+            'sum': 0,
+            'sub_str': []
+        }
+        if window <= 0:
+            points = range(1, len(self._message) // 2 + 1)
+        else:
+            window = min(window, len(self._message) // 2)
+            points = range(window, len(self._message) - window + 1)
+        for i in points:
+            if window <= 0:
+                length, msg_ = match_length(self._message, i, i)
+                out['sum'] += np.log2(i + 1) / length
+            else:
+                length, msg_ = match_length(self._message, i, window)
+                out['sum'] += np.log2(window + 1) / length
+            out['sub_str'].append(msg_)
+            out['num'] += 1
+        try:
+            out['h'] = out['sum'] / out['num']
+        except ZeroDivisionError:
+            out['h'] = 0
+        out['r'] = 1 - out['h'] / np.log2(len(self._message))
+        return out['h']
+
 def shannon_entropy(message : str) -> float :
     exr = {}
     entropy = 0
