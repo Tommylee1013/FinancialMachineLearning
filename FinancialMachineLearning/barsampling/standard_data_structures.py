@@ -1,17 +1,14 @@
 from typing import Union, Iterable, Optional
-
 import numpy as np
 import pandas as pd
-
 from FinancialMachineLearning.barsampling.base_bars import BaseBars
 
-
 class StandardBars(BaseBars):
-    def __init__(self, metric: str, threshold: int = 50000, batch_size: int = 20000000):
+    def __init__(self, metric: str,
+                 threshold: int = 50000,
+                 batch_size: int = 20000000):
 
         BaseBars.__init__(self, metric, batch_size)
-
-        # Threshold at which to sample
         self.threshold = threshold
 
     def _reset_cache(self):
@@ -48,20 +45,75 @@ class StandardBars(BaseBars):
                 self._reset_cache()
         return list_bars
 
-def get_dollar_bars(file_path_or_df: Union[str, Iterable[str], pd.DataFrame], threshold: float = 70000000, batch_size: int = 20000000,
-                    verbose: bool = True, to_csv: bool = False, output_path: Optional[str] = None):
+class Bar :
+    def __init__(self,
+                 file_path_or_df : Union[str, Iterable[str], pd.DataFrame],
+                 batch_size : int = 1000000,
+                 verbose : bool = True,
+                 to_csv: bool = False):
+        self.file_path_or_df = file_path_or_df
+        self.batch_size = batch_size
+        self.verbose = verbose
+        self.to_csv = to_csv
+    def dollar_bar(self, threshold: float = 1000000,
+                   output_path: Optional[str] = None):
+        bars = StandardBars(metric='cum_dollar_value',
+                            threshold = threshold,
+                            batch_size = self.batch_size)
+        dollar_bars = bars.batch_run(file_path_or_df = self.file_path_or_df,
+                                     verbose = self.verbose,
+                                     to_csv = self.to_csv,
+                                     output_path = output_path)
+        return dollar_bars
+    def volume_bar(self, threshold: float = 10000,
+                   output_path: Optional[str] = None):
+        bars = StandardBars(metric='cum_volume',
+                            threshold = threshold,
+                            batch_size = self.batch_size)
+        volume_bars = bars.batch_run(file_path_or_df = self.file_path_or_df,
+                                     verbose = self.verbose,
+                                     to_csv = self.to_csv,
+                                     output_path = output_path)
+        return volume_bars
+
+    def tick_bar(self, threshold: float = 600,
+                 output_path: Optional[str] = None):
+        bars = StandardBars(metric = 'cum_ticks',
+                            threshold = threshold,
+                            batch_size = self.batch_size)
+        tick_bars = bars.batch_run(file_path_or_df = self.file_path_or_df,
+                                   verbose = self.verbose,
+                                   to_csv = self.to_csv,
+                                   output_path = output_path)
+        return tick_bars
+
+
+def dollar_bar(file_path_or_df: Union[str, Iterable[str], pd.DataFrame],
+               threshold: float = 1000000,
+               batch_size: int = 1000000,
+               verbose: bool = True,
+               to_csv: bool = False,
+               output_path: Optional[str] = None):
     bars = StandardBars(metric='cum_dollar_value', threshold=threshold, batch_size=batch_size)
     dollar_bars = bars.batch_run(file_path_or_df=file_path_or_df, verbose=verbose, to_csv=to_csv, output_path=output_path)
     return dollar_bars
 
-def get_volume_bars(file_path_or_df: Union[str, Iterable[str], pd.DataFrame], threshold: float = 70000000, batch_size: int = 20000000,
-                    verbose: bool = True, to_csv: bool = False, output_path: Optional[str] = None):
+def volume_bar(file_path_or_df: Union[str, Iterable[str], pd.DataFrame],
+               threshold: float = 10000,
+               batch_size: int = 1000000,
+               verbose: bool = True,
+               to_csv: bool = False,
+               output_path: Optional[str] = None):
     bars = StandardBars(metric='cum_volume', threshold=threshold, batch_size=batch_size)
     volume_bars = bars.batch_run(file_path_or_df=file_path_or_df, verbose=verbose, to_csv=to_csv, output_path=output_path)
     return volume_bars
 
-def get_tick_bars(file_path_or_df: Union[str, Iterable[str], pd.DataFrame], threshold: float = 70000000, batch_size: int = 20000000,
-                  verbose: bool = True, to_csv: bool = False, output_path: Optional[str] = None):
+def tick_bar(file_path_or_df: Union[str, Iterable[str], pd.DataFrame],
+             threshold: float = 600,
+             batch_size: int = 1000000,
+             verbose: bool = True,
+             to_csv: bool = False,
+             output_path: Optional[str] = None):
     bars = StandardBars(metric='cum_ticks',
                         threshold=threshold, batch_size=batch_size)
     tick_bars = bars.batch_run(file_path_or_df=file_path_or_df, verbose=verbose, to_csv=to_csv, output_path=output_path)

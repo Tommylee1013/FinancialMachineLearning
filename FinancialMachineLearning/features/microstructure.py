@@ -1,8 +1,7 @@
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import LinearRegression
-
-def TickRule(price : pd.Series) :
+def tick_rule(price : pd.Series) :
     price_change = price.diff()
     aggressor = pd.Series(index = price.index, data = np.nan)
 
@@ -11,14 +10,14 @@ def TickRule(price : pd.Series) :
     aggressor[price_change > 0] = 1
     aggressor = aggressor.fillna(method = 'ffill')
     return aggressor
-def RollModel(price : pd.Series) :
+def roll_model(price : pd.Series) :
     price_change = price.diff()
     autocorr = price_change.autocorr(lag = 1)
     spread_squared = np.max([-autocorr, 0])
     spread = np.sqrt(spread_squared)
     noise = price_change.var() - 2 * (spread ** 2)
     return spread, noise
-def RangeVolatility(high, low, window):
+def range_volatility(high, low, window):
     log_high_low = np.log(high / low)
     volatility = log_high_low.rolling(window = window).mean() / np.sqrt(8. / np.pi)
     return volatility
@@ -44,7 +43,7 @@ class CorwinSchultz :
         alpha[alpha < 0] = 0
         return alpha
     @staticmethod
-    def BeckerParkinsonVolatility(beta, gamma):
+    def becker_parkinson_volatility(beta, gamma):
         k2 = np.sqrt(8 / np.pi)
         denominator = 3 - 2 ** 1.5
         beta_term = (2 ** (-0.5) -1) * np.sqrt(beta) / (k2 * denominator)
@@ -53,14 +52,14 @@ class CorwinSchultz :
         volatility[volatility < 0] = 0
         return volatility
 
-def CorwinSchultzSpread(high, low, sample_length=1):
+def corwin_schultz_spread(high, low, sample_length=1):
     beta = CorwinSchultz.beta(high, low, sample_length)
     gamma = CorwinSchultz.gamma(high, low)
     alpha = CorwinSchultz.alpha(beta, gamma)
     spread = 2 * (np.exp(alpha) - 1) / (1 + np.exp(alpha))
     return spread
 
-def BeckerParkinsonVolatility(high, low, sample_length=1):
+def becker_parkinson_volatility(high, low, sample_length=1):
     beta = CorwinSchultz.beta(high, low, sample_length)
     gamma = CorwinSchultz.gamma(high, low)
     volatility = CorwinSchultz.BeckerParkinsonVolatility(beta, gamma)
@@ -98,8 +97,7 @@ class Lambda(object) :
         lambda_ = log_diff / net_order_flow
         return lambda_
 
-
-def kyleLambda(price : pd.Series,
+def kyle_lambda(price : pd.Series,
                volume : pd.Series,
                signs,
                regressor = LinearRegression()):
@@ -110,7 +108,7 @@ def kyleLambda(price : pd.Series,
     lambda_ = regressor.fit(x_val, y_val)
     return lambda_.coef_[0]
 
-def amihudLambda(price : pd.Series,
+def amihud_lambda(price : pd.Series,
                  volume : pd.Series,
                  regressor = LinearRegression()):
     log_price = np.log(price)
@@ -120,7 +118,7 @@ def amihudLambda(price : pd.Series,
     lambda_ = regressor.fit(x, y)
     return lambda_.coef_[0]
 
-def hasbrouckLambda(price : pd.Series,
+def hasbrouck_lambda(price : pd.Series,
                     volume : pd.Series,
                     sign) :
     lambda_ = (np.sqrt(price * volume) * sign).sum()

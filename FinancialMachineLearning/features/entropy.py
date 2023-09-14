@@ -150,3 +150,6 @@ def konto_entropy(message: str, window: int = 0) -> float:
         out['h'] = 0
     out['r'] = 1 - out['h'] / np.log2(len(message))
     return out['h']
+
+class ContinuousEntropy :
+    pass
