@@ -1,5 +1,3 @@
-import numpy as np
-import pandas as pd
 from FinancialMachineLearning.barsampling.imbalance_data_structures import *
 from FinancialMachineLearning.barsampling.standard_data_structures import *
 from FinancialMachineLearning.barsampling.run_data_structures import *
@@ -15,7 +13,7 @@ class StandardBarFeatures :
         self.batch_size = batch_size
         self.verbose = verbose
         self.to_csv = to_csv
-    def dollar_bar(self, threshold: float = 1000000,
+    def dollar_bar(self, threshold: Union[float, int] = 1000000,
                    output_path: Optional[str] = None):
         bars = StandardBars(metric='cum_dollar_value',
                             threshold = threshold,
@@ -25,7 +23,7 @@ class StandardBarFeatures :
                                      to_csv = self.to_csv,
                                      output_path = output_path)
         return dollar_bars
-    def volume_bar(self, threshold: float = 10000,
+    def volume_bar(self, threshold: Union[float, int] = 10000,
                    output_path: Optional[str] = None):
         bars = StandardBars(metric='cum_volume',
                             threshold = threshold,
@@ -36,7 +34,7 @@ class StandardBarFeatures :
                                      output_path = output_path)
         return volume_bars
 
-    def tick_bar(self, threshold: float = 600,
+    def tick_bar(self, threshold: Union[float, int] = 600,
                  output_path: Optional[str] = None):
         bars = StandardBars(metric = 'cum_ticks',
                             threshold = threshold,

@@ -12,7 +12,7 @@ def chow_type_adf(series: pd.Series, molecule: list) -> pd.Series:
 
         y = series_diff.loc[series_lag.index].values
         x = series_lag.values
-        coefs, coef_vars = _get_betas(x.reshape(-1, 1), y)
+        coefs, coef_vars = beta(x.reshape(-1, 1), y)
         b_estimate, b_var = coefs[0], coef_vars[0][0]
         dfc_series[index] = b_estimate / (b_var ** 0.5)
     return dfc_series
