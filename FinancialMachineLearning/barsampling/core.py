@@ -193,8 +193,8 @@ class RunBarFeatures :
     def const_dollar_run_bars(self, expected_imbalance_window: int = 50,
                               exp_num_ticks_init: int = 100):
         bars = ConstRunBars(metric = 'dollar_run', num_prev_bars = self.num_prev_bars,
-                            expected_imbalance_window = self.expected_imbalance_window,
-                            exp_num_ticks_init = self.exp_num_ticks_init,
+                            expected_imbalance_window = expected_imbalance_window,
+                            exp_num_ticks_init = exp_num_ticks_init,
                             batch_size = self.batch_size, analyse_thresholds = self.analyse_thresholds)
         run_bars = bars.batch_run(file_path_or_df = self.file_path_or_df,
                                   verbose = self.verbose, to_csv = self.to_csv, output_path = self.output_path)
