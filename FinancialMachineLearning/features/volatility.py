@@ -5,13 +5,12 @@ import arch
 def daily_volatility(close: pd.Series, lookback: int = 100) -> pd.Series:
     df0 = close.index.searchsorted(close.index - pd.Timedelta(days=1))
     df0 = df0[df0 > 0]
-    df0 = pd.Series(close.index[df0 - 1], index=close.index[close.shape[0] - df0.shape[0]:])
-    try:
-        df0 = close.loc[df0.index] / close.loc[df0.values].values - 1
-    except Exception as e:
-        print(f'error: {e}\nplease confirm no duplicate indices')
-    df0 = close.loc[df0].ewm(span = lookback).std()
+    df0 = (pd.Series(close.index[df0 - 1],
+                     index=close.index[close.shape[0] - df0.shape[0]:]))
+    df0 = close.loc[df0.index] / close.loc[df0.values].values - 1  # daily rets
+    df0 = df0.ewm(span = lookback).std()
     return df0
+
 
 class HeteroscedasticityModels:
     def __init__(self, close : pd.Series, vol : str = 'original'):
@@ -45,7 +44,7 @@ class HeteroscedasticityModels:
                q : int = 1,
                mean : str = 'constant',
                dist : str = 'normal'):
-        model = arch.arch_model(self.ret, vol = 'EGARCH', p = p, q = q, mean = mean, dist = dist)
+        model = arch.arch_model(self.ret, vol = 'GARCH', p = p, q = q, mean = mean, dist = dist)
         result = model.fit()
         return result
     def figarch(self,

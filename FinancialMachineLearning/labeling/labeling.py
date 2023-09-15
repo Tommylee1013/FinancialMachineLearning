@@ -75,11 +75,13 @@ def barrier_touched(out_df, events):
     return out_df
 def meta_labeling(triple_barrier_events, close):
     events_ = triple_barrier_events.dropna(subset=['t1'])
-    all_dates = events_.index.union(other=events_['t1'].array).drop_duplicates()
+    all_dates = events_.index.union(other=events_['t1'].values).drop_duplicates()
     prices = close.reindex(all_dates, method='bfill')
-    out_df = pd.DataFrame(index=events_.index)
-    out_df['ret'] = np.log(prices.loc[events_['t1'].array].array) - np.log(prices.loc[events_.index])
+
+    out_df = pd.DataFrame(index = events_.index)
+    out_df['ret'] = np.log(prices.loc[events_['t1'].values].values / prices.loc[events_.index])
     out_df['trgt'] = events_['trgt']
+
     if 'side' in events_:
         out_df['ret'] = out_df['ret'] * events_['side']
     out_df = barrier_touched(out_df, triple_barrier_events)
