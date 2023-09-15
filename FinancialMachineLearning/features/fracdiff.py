@@ -3,59 +3,68 @@ import pandas as pd
 
 class FractionalDifferentiatedFeatures :
     @staticmethod
-    def getWeights(diff_amt, size):
-        weights = [1]
-        for k in range(1, size) :
-            weights_ = -weights[-1] * (diff_amt - k + 1) / k
-            weights.append(weights_)
-        weights = np.array(weights[::-1]).reshape(-1, 1)
-        return weights
-    @staticmethod
-    def fracDiff(price : pd.Series, diff_amt, threshold = 0.01):
-        weights = FractionalDifferentiatedFeatures.getWeights(diff_amt, price.shape[0])
-        weights_ = np.cumsum(abs(weights))
-        weights_ /= weights_[-1]
-        skip = weights_[weights_ > threshold].shape[0]
-        output_df = {}
-        for name in price.columns:
-            series_f = price[[name]].fillna(method = 'ffill').dropna()
-            output_df_ = pd.Series(index = price.index)
+    def getWeights(d, size):
+        w = [1.]
+        for k in range(1, size):
+            w_ = -w[-1] / k * (d - k + 1)
+            w.append(w_)
+        w = np.array(w[:: -1]).reshape(-1, 1)
+        return w
 
-            for iloc in range(skip, series_f.shape[0]):
-                loc = series_f.index[iloc]
-                output_df_[loc] = np.dot(weights[-(iloc + 1):, :].T, series_f.loc[:loc])[0, 0]
-
-            output_df[name] = output_df_.copy(deep=True)
-        output_df = pd.concat(output_df, axis=1)
-        return output_df
     @staticmethod
-    def getWeightsFFD(diff_amt, threshold, lim):
-        weights = [1.]
+    def getWeights_FFD(d, thres):
+        w = [1.]
         k = 1
-        ctr = 0
-        while True:
-            weights_ = -weights[-1] * (diff_amt - k + 1) / k
-            if abs(weights_) < threshold:
-                break
-            weights.append(weights_)
+        while abs(w[-1]) >= thres:
+            w_ = -w[-1] / k * (d - k + 1)
+            w.append(w_)
             k += 1
-            ctr += 1
-            if ctr == lim - 1:
-                break
-        weights = np.array(weights[::-1]).reshape(-1, 1)
-        return weights
+        w = np.array(w[:: -1]).reshape(-1, 1)[1:]
+        return w
+
     @staticmethod
-    def fracDiffFFD(series, diff_amt, threshold = 1e-5):
-        weights = FractionalDifferentiatedFeatures.getWeightsFFD(diff_amt, threshold, series.shape[0])
-        width = len(weights) - 1
-        output_df = {}
+    def fracDiff_FFD(series, d, thres=1e-5):
+        w = FractionalDifferentiatedFeatures.getWeights_FFD(d, thres)
+        # w = getWeights(d, series.shape[0])
+        # w=getWeights_FFD(d,thres)
+        width = len(w) - 1
+        df = {}
         for name in series.columns:
-            series_f = series[[name]].fillna(method='ffill').dropna()
-            temp_df_ = pd.Series(index=series.index)
-            for iloc1 in range(width, series_f.shape[0]):
-                loc0 = series_f.index[iloc1 - width]
-                loc1 = series.index[iloc1]
-                temp_df_[loc1] = np.dot(weights.T, series_f.loc[loc0:loc1])[0, 0]
-            output_df[name] = temp_df_.copy(deep=True)
-        output_df = pd.concat(output_df, axis=1)
-        return output_df
+            seriesF = series[[name]].fillna(method='ffill').dropna()
+            df_ = pd.Series()
+            for iloc1 in range(width, seriesF.shape[0]):
+                loc0 = seriesF.index[iloc1 - width]
+                loc1 = seriesF.index[iloc1]
+                if not np.isfinite(series.loc[loc1, name]):
+                    continue
+                df_.loc[loc1] = np.dot(w.T, seriesF.loc[loc0: loc1])[0, 0]
+
+            df[name] = df_.copy(deep=True)
+        df = pd.concat(df, axis=1)
+        return df
+
+    @staticmethod
+    def fracDiff(series, d, thres=.01):
+        w = FractionalDifferentiatedFeatures.getWeights(d, series.shape[0])
+        w_ = np.cumsum(abs(w))
+        w_ /= w_[-1]
+        skip = w_[w_ > thres].shape[0]
+        df = {}
+        for name in series.columns:
+            seriesF = series[[name]].fillna(method='ffill').dropna()
+            df_ = pd.Series()
+            for iloc in range(skip, seriesF.shape[0]):
+                loc = seriesF.index[iloc]
+
+                test_val = series.loc[loc, name]
+                if isinstance(test_val, (pd.Series, pd.DataFrame)):
+                    test_val = test_val.resample('1m').mean()
+                if not np.isfinite(test_val).any():
+                    continue
+                try:
+                    df_.loc[loc] = np.dot(w[-(iloc + 1):, :].T, seriesF.loc[:loc])[0, 0]
+                except:
+                    continue
+            df[name] = df_.copy(deep=True)
+        df = pd.concat(df, axis=1)
+        return df
