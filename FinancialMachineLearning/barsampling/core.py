@@ -49,7 +49,7 @@ class StandardBarFeatures :
 
 class ImbalanceBarFeatures :
     def __init__(self, file_path_or_df : Union[str, Iterable[str], pd.DataFrame],
-                 num_prev_bars : int = None,
+                 num_prev_bars : int = 3,
                  exp_num_ticks_constraints: List[float] = None,
                  batch_size : int = 10000000,
                  analyse_thresholds: bool = False,
@@ -57,8 +57,7 @@ class ImbalanceBarFeatures :
                  to_csv: bool = False,
                  output_path: Optional[str] = None):
         self.file_path_or_df = file_path_or_df
-        if self.num_prev_bars == None : self.num_prev_bars = 3
-        else : self.num_prev_bars = num_prev_bars
+        self.num_prev_bars = num_prev_bars
         self.exp_num_ticks_constraints = exp_num_ticks_constraints
         self.batch_size = batch_size
         self.analyse_thresholds = analyse_thresholds
@@ -102,8 +101,8 @@ class ImbalanceBarFeatures :
 
         return imbalance_bars, pd.DataFrame(bars.bars_thresholds)
 
-    def const_dollar_imbalance_bars(self, expected_imbalance_window: int = 50,
-                                    exp_num_ticks_init: int = 100):
+    def const_dollar_imbalance_bar(self, expected_imbalance_window: int = 50,
+                                   exp_num_ticks_init: int = 100):
         bars = ConstImbalanceBars(metric = 'dollar_imbalance',
                                   expected_imbalance_window = expected_imbalance_window,
                                   exp_num_ticks_init = exp_num_ticks_init,
@@ -113,8 +112,8 @@ class ImbalanceBarFeatures :
 
         return imbalance_bars, pd.DataFrame(bars.bars_thresholds)
 
-    def const_volume_imbalance_bars(self, expected_imbalance_window: int = 50,
-                                    exp_num_ticks_init: int = 100):
+    def const_volume_imbalance_bar(self, expected_imbalance_window: int = 50,
+                                   exp_num_ticks_init: int = 100):
         bars = ConstImbalanceBars(metric = 'volume_imbalance',
                                   expected_imbalance_window = expected_imbalance_window,
                                   exp_num_ticks_init = exp_num_ticks_init,
@@ -124,8 +123,8 @@ class ImbalanceBarFeatures :
 
         return imbalance_bars, pd.DataFrame(bars.bars_thresholds)
 
-    def const_tick_imbalance_bars(self, expected_imbalance_window: int = 100,
-                                  exp_num_ticks_init: int = 200):
+    def const_tick_imbalance_bar(self, expected_imbalance_window: int = 100,
+                                 exp_num_ticks_init: int = 200):
         bars = ConstImbalanceBars(metric = 'tick_imbalance',
                                   expected_imbalance_window = expected_imbalance_window,
                                   exp_num_ticks_init = exp_num_ticks_init,
@@ -136,7 +135,7 @@ class ImbalanceBarFeatures :
 
 class RunBarFeatures :
     def __init__(self, file_path_or_df: Union[str, Iterable[str], pd.DataFrame],
-                 num_prev_bars: int = None,
+                 num_prev_bars: int = 3,
                  exp_num_ticks_constraints: List[float] = None,
                  batch_size: int = 10000000,
                  analyse_thresholds: bool = False,
@@ -144,8 +143,7 @@ class RunBarFeatures :
                  to_csv: bool = False,
                  output_path: Optional[str] = None):
         self.file_path_or_df = file_path_or_df
-        if num_prev_bars == None : self.num_prev_bars = 3
-        else : self.num_prev_bars = num_prev_bars
+        self.num_prev_bars = num_prev_bars
         self.exp_num_ticks_constraints = exp_num_ticks_constraints
         self.batch_size = batch_size
         self.analyse_thresholds = analyse_thresholds
@@ -153,8 +151,8 @@ class RunBarFeatures :
         self.to_csv = to_csv
         self.output_path = output_path
 
-    def ema_dollar_run_bars(self, expected_imbalance_window: int = 50,
-                            exp_num_ticks_init: int = 100):
+    def ema_dollar_run_bar(self, expected_imbalance_window: int = 50,
+                           exp_num_ticks_init: int = 100):
         bars = EMARunBars(metric = 'dollar_run', num_prev_bars = self.num_prev_bars,
                           expected_imbalance_window = expected_imbalance_window,
                           exp_num_ticks_init = exp_num_ticks_init,
@@ -165,8 +163,8 @@ class RunBarFeatures :
 
         return run_bars, pd.DataFrame(bars.bars_thresholds)
 
-    def ema_volume_run_bars(self, expected_imbalance_window: int = 50,
-                            exp_num_ticks_init: int = 100):
+    def ema_volume_run_bar(self, expected_imbalance_window: int = 50,
+                           exp_num_ticks_init: int = 100):
         bars = EMARunBars(metric = 'volume_run', num_prev_bars = self.num_prev_bars,
                           expected_imbalance_window = expected_imbalance_window,
                           exp_num_ticks_init = exp_num_ticks_init,
@@ -178,8 +176,8 @@ class RunBarFeatures :
 
         return run_bars, pd.DataFrame(bars.bars_thresholds)
 
-    def ema_tick_run_bars(self, expected_imbalance_window: int = 100,
-                          exp_num_ticks_init: int = 200):
+    def ema_tick_run_bar(self, expected_imbalance_window: int = 100,
+                         exp_num_ticks_init: int = 200):
         bars = EMARunBars(metric = 'tick_run', num_prev_bars = self.num_prev_bars,
                           expected_imbalance_window = expected_imbalance_window,
                           exp_num_ticks_init = exp_num_ticks_init,
@@ -190,8 +188,8 @@ class RunBarFeatures :
 
         return run_bars, pd.DataFrame(bars.bars_thresholds)
 
-    def const_dollar_run_bars(self, expected_imbalance_window: int = 50,
-                              exp_num_ticks_init: int = 100):
+    def const_dollar_run_bar(self, expected_imbalance_window: int = 50,
+                             exp_num_ticks_init: int = 100):
         bars = ConstRunBars(metric = 'dollar_run', num_prev_bars = self.num_prev_bars,
                             expected_imbalance_window = expected_imbalance_window,
                             exp_num_ticks_init = exp_num_ticks_init,
@@ -200,8 +198,8 @@ class RunBarFeatures :
                                   verbose = self.verbose, to_csv = self.to_csv, output_path = self.output_path)
         return run_bars, pd.DataFrame(bars.bars_thresholds)
 
-    def const_volume_run_bars(self, expected_imbalance_window: int = 50,
-                              exp_num_ticks_init: int = 100):
+    def const_volume_run_bar(self, expected_imbalance_window: int = 50,
+                             exp_num_ticks_init: int = 100):
         bars = ConstRunBars(metric = 'volume_run', num_prev_bars = self.num_prev_bars,
                             expected_imbalance_window = expected_imbalance_window,
                             exp_num_ticks_init = exp_num_ticks_init,
@@ -210,8 +208,8 @@ class RunBarFeatures :
                                   verbose = self.verbose, to_csv = self.to_csv, output_path = self.output_path)
         return run_bars, pd.DataFrame(bars.bars_thresholds)
 
-    def const_tick_run_bars(self, expected_imbalance_window: int = 10000,
-                            exp_num_ticks_init: int = 20000):
+    def const_tick_run_bar(self, expected_imbalance_window: int = 10000,
+                           exp_num_ticks_init: int = 20000):
         bars = ConstRunBars(metric = 'tick_run', num_prev_bars = self.num_prev_bars,
                             expected_imbalance_window = expected_imbalance_window,
                             exp_num_ticks_init = exp_num_ticks_init,
