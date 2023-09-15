@@ -178,8 +178,8 @@ class RunBarFeatures :
 
         return run_bars, pd.DataFrame(bars.bars_thresholds)
 
-    def ema_tick_run_bars(self, expected_imbalance_window: int = 10000,
-                          exp_num_ticks_init: int = 20000):
+    def ema_tick_run_bars(self, expected_imbalance_window: int = 100,
+                          exp_num_ticks_init: int = 200):
         bars = EMARunBars(metric = 'tick_run', num_prev_bars = self.num_prev_bars,
                           expected_imbalance_window = expected_imbalance_window,
                           exp_num_ticks_init = exp_num_ticks_init,
@@ -190,56 +190,32 @@ class RunBarFeatures :
 
         return run_bars, pd.DataFrame(bars.bars_thresholds)
 
-    def const_dollar_run_bars(file_path_or_df: Union[str, Iterable[str], pd.DataFrame],
-                              num_prev_bars: int,
-                              expected_imbalance_window: int = 10000,
-                              exp_num_ticks_init: int = 20000,
-                              batch_size: int = 2e7,
-                              analyse_thresholds: bool = False,
-                              verbose: bool = True,
-                              to_csv: bool = False,
-                              output_path: Optional[str] = None):
-        bars = ConstRunBars(metric='dollar_run', num_prev_bars=num_prev_bars,
-                            expected_imbalance_window=expected_imbalance_window,
-                            exp_num_ticks_init=exp_num_ticks_init,
-                            batch_size=batch_size, analyse_thresholds=analyse_thresholds)
-        run_bars = bars.batch_run(file_path_or_df=file_path_or_df,
-                                  verbose=verbose, to_csv=to_csv, output_path=output_path)
-
+    def const_dollar_run_bars(self, expected_imbalance_window: int = 50,
+                              exp_num_ticks_init: int = 100):
+        bars = ConstRunBars(metric = 'dollar_run', num_prev_bars = self.num_prev_bars,
+                            expected_imbalance_window = self.expected_imbalance_window,
+                            exp_num_ticks_init = self.exp_num_ticks_init,
+                            batch_size = self.batch_size, analyse_thresholds = self.analyse_thresholds)
+        run_bars = bars.batch_run(file_path_or_df = self.file_path_or_df,
+                                  verbose = self.verbose, to_csv = self.to_csv, output_path = self.output_path)
         return run_bars, pd.DataFrame(bars.bars_thresholds)
 
-    def const_volume_run_bars(file_path_or_df: Union[str, Iterable[str], pd.DataFrame],
-                              num_prev_bars: int,
-                              expected_imbalance_window: int = 10000,
-                              exp_num_ticks_init: int = 20000,
-                              batch_size: int = 2e7,
-                              analyse_thresholds: bool = False,
-                              verbose: bool = True,
-                              to_csv: bool = False,
-                              output_path: Optional[str] = None):
-        bars = ConstRunBars(metric='volume_run', num_prev_bars=num_prev_bars,
-                            expected_imbalance_window=expected_imbalance_window,
-                            exp_num_ticks_init=exp_num_ticks_init,
-                            batch_size=batch_size, analyse_thresholds=analyse_thresholds)
-        run_bars = bars.batch_run(file_path_or_df=file_path_or_df,
-                                  verbose=verbose, to_csv=to_csv, output_path=output_path)
-
+    def const_volume_run_bars(self, expected_imbalance_window: int = 50,
+                              exp_num_ticks_init: int = 100):
+        bars = ConstRunBars(metric = 'volume_run', num_prev_bars = self.num_prev_bars,
+                            expected_imbalance_window = expected_imbalance_window,
+                            exp_num_ticks_init = exp_num_ticks_init,
+                            batch_size = self.batch_size, analyse_thresholds = self.analyse_thresholds)
+        run_bars = bars.batch_run(file_path_or_df = self.file_path_or_df,
+                                  verbose = self.verbose, to_csv = self.to_csv, output_path = self.output_path)
         return run_bars, pd.DataFrame(bars.bars_thresholds)
 
-    def const_tick_run_bars(file_path_or_df: Union[str, Iterable[str], pd.DataFrame],
-                            num_prev_bars: int,
-                            expected_imbalance_window: int = 10000,
-                            exp_num_ticks_init: int = 20000,
-                            batch_size: int = 2e7,
-                            analyse_thresholds: bool = False,
-                            verbose: bool = True,
-                            to_csv: bool = False,
-                            output_path: Optional[str] = None):
-        bars = ConstRunBars(metric='tick_run', num_prev_bars=num_prev_bars,
-                            expected_imbalance_window=expected_imbalance_window,
-                            exp_num_ticks_init=exp_num_ticks_init,
-                            batch_size=batch_size, analyse_thresholds=analyse_thresholds)
-        run_bars = bars.batch_run(file_path_or_df=file_path_or_df,
-                                  verbose=verbose, to_csv=to_csv, output_path=output_path)
-
+    def const_tick_run_bars(self, expected_imbalance_window: int = 10000,
+                            exp_num_ticks_init: int = 20000):
+        bars = ConstRunBars(metric = 'tick_run', num_prev_bars = self.num_prev_bars,
+                            expected_imbalance_window = expected_imbalance_window,
+                            exp_num_ticks_init = exp_num_ticks_init,
+                            batch_size = self.batch_size, analyse_thresholds = self.analyse_thresholds)
+        run_bars = bars.batch_run(file_path_or_df = self.file_path_or_df,
+                                  verbose = self.verbose, to_csv = self.to_csv, output_path = self.output_path)
         return run_bars, pd.DataFrame(bars.bars_thresholds)
