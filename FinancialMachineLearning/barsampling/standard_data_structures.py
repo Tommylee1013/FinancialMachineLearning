@@ -45,49 +45,6 @@ class StandardBars(BaseBars):
                 self._reset_cache()
         return list_bars
 
-class Bar :
-    def __init__(self,
-                 file_path_or_df : Union[str, Iterable[str], pd.DataFrame],
-                 batch_size : int = 1000000,
-                 verbose : bool = True,
-                 to_csv: bool = False):
-        self.file_path_or_df = file_path_or_df
-        self.batch_size = batch_size
-        self.verbose = verbose
-        self.to_csv = to_csv
-    def dollar_bar(self, threshold: float = 1000000,
-                   output_path: Optional[str] = None):
-        bars = StandardBars(metric='cum_dollar_value',
-                            threshold = threshold,
-                            batch_size = self.batch_size)
-        dollar_bars = bars.batch_run(file_path_or_df = self.file_path_or_df,
-                                     verbose = self.verbose,
-                                     to_csv = self.to_csv,
-                                     output_path = output_path)
-        return dollar_bars
-    def volume_bar(self, threshold: float = 10000,
-                   output_path: Optional[str] = None):
-        bars = StandardBars(metric='cum_volume',
-                            threshold = threshold,
-                            batch_size = self.batch_size)
-        volume_bars = bars.batch_run(file_path_or_df = self.file_path_or_df,
-                                     verbose = self.verbose,
-                                     to_csv = self.to_csv,
-                                     output_path = output_path)
-        return volume_bars
-
-    def tick_bar(self, threshold: float = 600,
-                 output_path: Optional[str] = None):
-        bars = StandardBars(metric = 'cum_ticks',
-                            threshold = threshold,
-                            batch_size = self.batch_size)
-        tick_bars = bars.batch_run(file_path_or_df = self.file_path_or_df,
-                                   verbose = self.verbose,
-                                   to_csv = self.to_csv,
-                                   output_path = output_path)
-        return tick_bars
-
-
 def dollar_bar(file_path_or_df: Union[str, Iterable[str], pd.DataFrame],
                threshold: float = 1000000,
                batch_size: int = 1000000,

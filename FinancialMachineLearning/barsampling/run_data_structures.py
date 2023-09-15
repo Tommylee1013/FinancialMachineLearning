@@ -43,7 +43,7 @@ class ConstRunBars(BaseRunBars):
         return self.thresholds['exp_num_ticks']
 
 
-def get_ema_dollar_run_bars(file_path_or_df: Union[str, Iterable[str], pd.DataFrame], num_prev_bars: int = 3,
+def ema_dollar_run_bars(file_path_or_df: Union[str, Iterable[str], pd.DataFrame], num_prev_bars: int = 3,
                             expected_imbalance_window: int = 10000, exp_num_ticks_init: int = 20000,
                             exp_num_ticks_constraints: List[float] = None, batch_size: int = 2e7,
                             analyse_thresholds: bool = False,
@@ -57,7 +57,7 @@ def get_ema_dollar_run_bars(file_path_or_df: Union[str, Iterable[str], pd.DataFr
 
     return run_bars, pd.DataFrame(bars.bars_thresholds)
 
-def get_ema_volume_run_bars(file_path_or_df: Union[str, Iterable[str], pd.DataFrame], num_prev_bars: int = 3,
+def ema_volume_run_bars(file_path_or_df: Union[str, Iterable[str], pd.DataFrame], num_prev_bars: int = 3,
                             expected_imbalance_window: int = 10000, exp_num_ticks_init: int = 20000,
                             exp_num_ticks_constraints: List[float] = None, batch_size: int = 2e7,
                             analyse_thresholds: bool = False,
@@ -70,7 +70,7 @@ def get_ema_volume_run_bars(file_path_or_df: Union[str, Iterable[str], pd.DataFr
                               verbose=verbose, to_csv=to_csv, output_path=output_path)
 
     return run_bars, pd.DataFrame(bars.bars_thresholds)
-def get_ema_tick_run_bars(file_path_or_df: Union[str, Iterable[str], pd.DataFrame],
+def ema_tick_run_bars(file_path_or_df: Union[str, Iterable[str], pd.DataFrame],
                           num_prev_bars: int = 3,
                           expected_imbalance_window: int = 10000,
                           exp_num_ticks_init: int = 20000,
@@ -88,7 +88,7 @@ def get_ema_tick_run_bars(file_path_or_df: Union[str, Iterable[str], pd.DataFram
                               verbose=verbose, to_csv=to_csv, output_path=output_path)
 
     return run_bars, pd.DataFrame(bars.bars_thresholds)
-def get_const_dollar_run_bars(file_path_or_df: Union[str, Iterable[str], pd.DataFrame],
+def const_dollar_run_bars(file_path_or_df: Union[str, Iterable[str], pd.DataFrame],
                               num_prev_bars: int,
                               expected_imbalance_window: int = 10000,
                               exp_num_ticks_init: int = 20000,
@@ -107,7 +107,7 @@ def get_const_dollar_run_bars(file_path_or_df: Union[str, Iterable[str], pd.Data
     return run_bars, pd.DataFrame(bars.bars_thresholds)
 
 
-def get_const_volume_run_bars(file_path_or_df: Union[str, Iterable[str], pd.DataFrame],
+def const_volume_run_bars(file_path_or_df: Union[str, Iterable[str], pd.DataFrame],
                               num_prev_bars: int,
                               expected_imbalance_window: int = 10000,
                               exp_num_ticks_init: int = 20000,
@@ -125,7 +125,7 @@ def get_const_volume_run_bars(file_path_or_df: Union[str, Iterable[str], pd.Data
 
     return run_bars, pd.DataFrame(bars.bars_thresholds)
 
-def get_const_tick_run_bars(file_path_or_df: Union[str, Iterable[str], pd.DataFrame],
+def const_tick_run_bars(file_path_or_df: Union[str, Iterable[str], pd.DataFrame],
                             num_prev_bars: int,
                             expected_imbalance_window: int = 10000,
                             exp_num_ticks_init: int = 20000,
