@@ -62,7 +62,7 @@ def corwin_schultz_spread(high, low, sample_length=1):
 def becker_parkinson_volatility(high, low, sample_length=1):
     beta = CorwinSchultz.beta(high, low, sample_length)
     gamma = CorwinSchultz.gamma(high, low)
-    volatility = CorwinSchultz.BeckerParkinsonVolatility(beta, gamma)
+    volatility = CorwinSchultz.becker_parkinson_volatility(beta, gamma)
     return volatility
 class Lambda(object) :
     def __init__(self, price, volume):
