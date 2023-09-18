@@ -74,9 +74,9 @@ def barrier_touched(out_df, events):
     out_df['bin'] = store
     return out_df
 def meta_labeling(triple_barrier_events, close):
-    events_ = triple_barrier_events.dropna(subset=['t1'])
-    all_dates = events_.index.union(other=events_['t1'].values).drop_duplicates()
-    prices = close.reindex(all_dates, method='bfill')
+    events_ = triple_barrier_events.dropna(subset = ['t1'])
+    all_dates = events_.index.union(other = events_['t1'].values).drop_duplicates()
+    prices = close.reindex(all_dates, method = 'bfill')
 
     out_df = pd.DataFrame(index = events_.index)
     out_df['ret'] = np.log(prices.loc[events_['t1'].values].values / prices.loc[events_.index])
@@ -92,7 +92,7 @@ def meta_labeling(triple_barrier_events, close):
     if 'side' in tb_cols:
         out_df['side'] = triple_barrier_events['side']
     return out_df
-def drop_labels(events, min_pct = .05):
+def drop_labels(events, min_pct = 0.05):
     while True:
         df0 = events['bin'].value_counts(normalize=True)
         if df0.min() > min_pct or df0.shape[0] < 3:
