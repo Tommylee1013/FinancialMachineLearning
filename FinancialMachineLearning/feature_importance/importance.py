@@ -53,7 +53,7 @@ def mean_decrease_accuracy(model, X, y, cv_gen, sample_weight=None, scoring=log_
 
     return importance
 
-def single_feature_importance(clf, X, y, cv_gen, sample_weight=None, scoring=log_loss):
+def single_feature_importance(clf, X, y, cv_gen, sample_weight = None, scoring = log_loss):
     feature_names = X.columns
     if sample_weight is None:
         sample_weight = np.ones((X.shape[0],))
@@ -63,7 +63,6 @@ def single_feature_importance(clf, X, y, cv_gen, sample_weight=None, scoring=log
         feat_cross_val_scores = ml_cross_val_score(clf, X=X[[feat]], y=y, sample_weight=sample_weight,
                                                    scoring=scoring, cv_gen=cv_gen)
         imp.loc[feat, 'mean'] = feat_cross_val_scores.mean()
-        # pylint: disable=unsubscriptable-object
         imp.loc[feat, 'std'] = feat_cross_val_scores.std() * feat_cross_val_scores.shape[0] ** -.5
     return imp
 

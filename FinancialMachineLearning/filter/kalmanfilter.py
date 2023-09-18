@@ -1,5 +1,6 @@
 import numpy as np
 import statsmodels.api as sm
+import pandas as pd
 from filterpy.kalman import FixedLagSmoother, KalmanFilter
 from filterpy.common import Q_discrete_white_noise
 class LocalLinearTrend(sm.tsa.statespace.MLEModel):
