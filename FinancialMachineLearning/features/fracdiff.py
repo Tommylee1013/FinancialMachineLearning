@@ -42,7 +42,6 @@ class FractionalDifferentiatedFeatures :
             df[name] = df_.copy(deep=True)
         df = pd.concat(df, axis=1)
         return df
-
     @staticmethod
     def fracDiff(series, d, thres=.01):
         w = FractionalDifferentiatedFeatures.getWeights(d, series.shape[0])

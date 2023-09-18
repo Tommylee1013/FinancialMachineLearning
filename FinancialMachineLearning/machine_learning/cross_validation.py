@@ -6,7 +6,8 @@ from sklearn.metrics import log_loss
 from sklearn.model_selection import KFold
 from sklearn.base import ClassifierMixin
 from sklearn.model_selection import BaseCrossValidator
-from sklearn.model_selection import GridSearchCV, RandomizedSearchCV, BaggingClassifier
+from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
+from sklearn.ensemble import BaggingClassifier
 from sklearn.pipeline import Pipeline
 
 from scipy.stats import rv_continuous, kstest

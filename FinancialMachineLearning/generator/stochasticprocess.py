@@ -2,60 +2,141 @@ import numpy as np
 import pandas as pd
 import scipy.stats as ss
 class GeometricBrownianMotion :
-    pass
-class OrnsteinUhlenbeckProcess:
-    def __init__(self, sigma : float = 0.2,
-                 theta : float = -0.1,
-                 kappa : float = 0.1,
-                 T : int = 1,
-                 N : int = 10000) :
-        self._theta = theta
-        self._T = T
-        self._N = N
-        if sigma < 0 or kappa < 0 :
-            raise ValueError("sigma, theta, kappa must be positive.")
-        else :
-            self._sigma = sigma
-            self._kappa = kappa
-    @property
-    def sigma(self):
-        return self._sigma
-    @sigma.setter
-    def sigma(self, value):
-        self._sigma = value
-    @property
-    def theta(self):
-        return self._theta
-    @theta.setter
-    def theta(self, value):
-        self._theta = value
-    @property
-    def kappa(self):
-        return self._kappa
-    @kappa.setter
-    def kappa(self, value):
-        self._kappa = value
-    def generator(self, X0 : int = 0,
-                  paths : int = 1) -> np.array :
-        T_vec, dt = np.linspace(0, self._T, self._N, retstep = True)
-        X = np.zeros((paths, self._N))
-        X[:, 0] = X0
-        W = ss.norm.rvs(loc = 0, scale = 1, size = (paths, self._N-1))
-        std_dt = np.sqrt(self._sigma**2 / (2 * self._kappa) * (1 - np.exp(-2 * self._kappa * dt)))
-        for i in range(0, self._N-1):
-            X[:, i + 1] = self._theta + np.exp(-self._kappa * dt) * (X[:, i] - self._theta) + std_dt * W[:, i]
-        return X
-    def var(self):
-        dt = self._T / self._N
-        out = self._sigma**2 / (2 * self._kappa) * (1 - np.exp(-2 * self._kappa * dt))
-        return out
-    def std(self):
-        dt = self._T / self._N
-        out = np.sqrt(self._sigma**2 / (2 * self._kappa) * (1 - np.exp(-2 * self._kappa * dt)))
-        return out
-    def mean(self, s0 : int = 1, t : int = 1):
-        out = self._theta + (s0 - self._theta) * np.exp(-self.kappa * t)
-        return out
+    def __init__(self, mu, sigma, n_paths, n_steps, t, T, S_0) :
+        self.mu = mu
+        self.sigma = sigma
+        self.n_paths = n_paths
+        self.n_steps = n_steps
+        self.t = t
+        self.T = T
+        self.S_0 = self.S_0
 
-class AutoRegressiveProcess :
-    pass
+    def get_paths(self):
+        dt = self.T / self.n_steps
+        dW = np.sqrt(dt) * np.random.randn(self.n_paths, self.n_steps)
+        dS = (self.mu - 0.5 * self.sigma ** 2) * dt + self.sigma * dW
+
+        dS = np.insert(dS, 0, 0, axis=1)
+        S = np.cumsum(dS, axis=1)
+
+        S = self.S_0 * np.exp(S)
+        return S
+
+    def mean(self):
+        mean = self.S_0 * np.exp(self.mu * self.t)
+        return mean
+
+    def var(self):
+        variance = (self.S_0 ** 2) * np.exp(2 * self.mu * self.t) * (np.exp(self.t * self.sigma ** 2) - 1)
+        return variance
+
+    def simulate(self):
+        simulation = pd.DataFrame(self.get_paths().transpose())
+        return simulation
+
+
+class OrnsteinUhlenbeckProcess:
+    def __init__(self, alpha, mu, sigma, n_paths, n_steps, t, T, S_0):
+        self.alpha = alpha
+        self.mu = mu
+        self.sigma = sigma
+        self.n_paths = n_paths
+        self.n_steps = n_steps
+        self.t = t
+        self.T = T
+        self.S_0 = S_0
+    def get_paths(self, analytic_EM : bool = False):
+        dt = self.T / self.n_steps
+        N = np.random.randn(self.n_steps, self.n_paths)
+        S = np.concatenate((self.S_0 * np.ones((1, self.n_paths)), np.zeros((self.n_steps, self.n_paths))), axis=0)
+
+        if analytic_EM == True:
+            sdev = self.sigma * np.sqrt((1 - np.exp(-2 * self.alpha * dt)) / (2 * self.alpha))
+            for i in range(0, self.n_steps):
+                S[i + 1, :] = self.mu + (S[i, :] - self.mu) * np.exp(-self.alpha * dt) + sdev * N[i, :]
+        else:
+            sdev = self.sigma * np.sqrt(dt)
+            for i in range(0, self.n_steps):
+                S[i + 1, :] = S[i, :] + self.alpha * (self.mu - S[i, :]) * dt + sdev * N[i, :]
+        return S
+    def mean(self):
+        ES = self.mu + (self.S_0 - self.mu) * np.exp(-self.alpha * self.t)
+        return ES
+    def var(self):
+        variance = (1 - np.exp(-2 * self.alpha * self.t)) * (self.sigma ** 2) / (2 * self.alpha)
+        return variance
+
+    def simulate(self, analytic_EM=False, plot_expected=False):
+        simulation = pd.DataFrame(self.get_paths(analytic_EM))
+        return simulation
+
+class AutoRegressiveProcess:
+    def __init__(self, p, coefficients = None):
+        self.p = p
+        if coefficients is None:
+            self.coefficients = np.random.randn(p)
+        else:
+            if len(coefficients) != p:
+                raise ValueError(f"coefficients must have elements {p}")
+            self.coefficients = np.array(coefficients)
+    def mean(self):
+        mean = self.coefficients.mean()
+        return mean
+    def var(self):
+        return np.var(self.coefficients) / (1 - np.sum(self.coefficients) ** 2)
+    def simulate(self, n):
+        data = [0]
+        for i in range(1, n):
+            ar_term = np.sum(self.coefficients * data[-self.p:])
+            new_value = ar_term + np.random.randn()
+            data.append(new_value)
+        simulation = pd.DataFrame(data)
+        return simulation
+
+class JumpDiffusionProcess :
+    def __init__(self, mu, sigma, lambdaN, eta1, eta2, p, n_paths, n_steps, t, T, S_0):
+        self.mu = mu
+        self.sigma = sigma
+        self.lambdaN = lambdaN
+        self.eta1 = eta1
+        self.eta2 = eta2
+        self.p = p
+        self.n_paths = n_paths
+        self.n_steps = n_steps
+        self.t = t
+        self.T =T
+        self.S_0 = S_0
+
+    def get_paths(self):
+        dt = self.T / self.n_steps
+        dX = (self.mu - 0.5 * self.sigma ** 2) * dt + self.sigma * np.sqrt(dt) * np.random.randn(self.n_steps,
+                                                                                                 self.n_paths)
+        dP = np.random.poisson(self.lambdaN * dt, (self.n_steps, self.n_paths))
+        U = np.random.uniform(0, 1, (self.n_steps, self.n_paths))
+        Z = np.zeros((self.n_steps, self.n_paths))
+        for i in range(0, len(U[0])):
+            for j in range(0, len(U)):
+                if U[j, i] >= self.p:
+                    Z[j, i] = (-1 / self.eta1) * np.log((1 - U[j, i]) / self.p)
+                elif U[j, i] < self.p:
+                    Z[j, i] = (1 / self.eta2) * np.log(U[j, i] / (1 - self.p))
+
+        dJ = (np.exp(Z) - 1) * dP
+        dS = dX + dJ
+
+        dS = np.insert(dS, 0, self.S_0, axis=0)
+        S = np.cumsum(dS, axis=0)
+
+        return S
+
+    def mean(self):
+        mean = (self.mu + self.lambdaN * (self.p / self.eta1 - (1 - self.p) / self.eta2)) * self.t + self.S_0
+        return mean
+
+    def var(self):
+        variance = (self.sigma ** 2 + 2 * self.lambdaN * (self.p / (self.eta1 ** 2) + (1 - self.p) / (self.eta2 ** 2))) * self.t
+        return variance
+
+    def simulate(self, plot_expected=False):
+        simulation = pd.DataFrame(self.get_paths())
+        return simulation
