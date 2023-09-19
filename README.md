@@ -1,4 +1,4 @@
-![Screenshot 2023-06-07 at 4.46.19 PM.png](..%2F..%2Fgit_photo%2FScreenshot%202023-06-07%20at%204.46.19%20PM.png)
+![FML.png](Images%2FFML.png)
 
 ## FinancialMachineLearning
 
@@ -19,13 +19,14 @@
 - Kalman Filtering
 - Kalman Smoothering
 
-#### generator
-Stochastic Process generator. 아래와 같은 확률 과정을 발생시킵니다
+#### Generator
+Stochastic Process generator. 아래와 같은 확률 과정을 생성합니다
 
 - Geometric Brownian Motion
 - Ornstein Uhlenbeck Process
 - Jump Diffusion Model
 - Auto Regressive Process
+- Microstructural Process Generator
 
 #### Labeling
 Machine Learning 학습을 위한 label분류를 진행합니다
@@ -57,6 +58,8 @@ portfolio 최적화를 위한 기능을 지원합니다. Machine Learning for As
 
 - Concurrency
 - Volatility
+  - Auto Regressive Conditional Heteroscedasticity Model
+  - General Auto Regressive Conditional Heteroscedasticity Model
 - Discrete Entropy
 - Approximate Entropy
 - Fractionally Differentiated features
@@ -81,3 +84,9 @@ portfolio 최적화를 위한 기능을 지원합니다. Machine Learning for As
 
 - Betting size
 - Backtest Statistics
+
+#### Technical Feature
+
+- RSI
+- MACD
+- Moving Average
