@@ -34,7 +34,10 @@ class GeometricBrownianMotion :
         return variance
 
     def simulate(self) -> pd.DataFrame:
-        simulation = pd.DataFrame(self.get_paths().transpose())
+        start = datetime.datetime.today()
+        end = start + pd.offsets.BDay(self.n_steps)
+        df0 = pd.date_range(start=start, end=end, freq='B')
+        simulation = pd.DataFrame(self.get_paths().transpose(), index = df0)
         return simulation
 
 
@@ -70,8 +73,12 @@ class OrnsteinUhlenbeckProcess:
         variance = (1 - np.exp(-2 * self.alpha * self.t)) * (self.sigma ** 2) / (2 * self.alpha)
         return variance
     def simulate(self, analytic_EM=False) -> pd.DataFrame:
-        simulation = pd.DataFrame(self.get_paths(analytic_EM))
+        start = datetime.datetime.today()
+        end = start + pd.offsets.BDay(self.n_steps)
+        df0 = pd.date_range(start=start, end=end, freq='B')
+        simulation = pd.DataFrame(self.get_paths(analytic_EM), index = df0)
         return simulation
+
 class AutoRegressiveProcess:
     def __init__(self, p : int, n_paths : int ,
                  n_steps : int, start : int,
@@ -106,7 +113,12 @@ class AutoRegressiveProcess:
                 new_value = ar_term + np.random.randn()
                 data[i, j] = new_value
 
-        simulation = pd.DataFrame(data, columns=[f'Path_{i}' for i in range(self.n_paths)])
+        start = datetime.datetime.today()
+        end = start + pd.offsets.BDay(self.n_steps)
+        df0 = pd.date_range(start = start, end = end, freq='B')
+
+        simulation = pd.DataFrame(data, columns = [f'Path_{i}' for i in range(self.n_paths)], index = df0)
+
         return simulation
 
 class JumpDiffusionProcess :
@@ -154,7 +166,10 @@ class JumpDiffusionProcess :
         return variance
 
     def simulate(self) -> pd.DataFrame:
-        simulation = pd.DataFrame(self.get_paths())
+        start = datetime.datetime.today()
+        end = start + pd.offsets.BDay(self.n_steps)
+        df0 = pd.date_range(start=start, end=end, freq='B')
+        simulation = pd.DataFrame(self.get_paths(), index = df0)
         return simulation
 
 class PradoSyntheticProcess :
@@ -163,7 +178,7 @@ class PradoSyntheticProcess :
         self.n_informative = n_informative
         self.n_redundant = n_redundant
         self.n_samples = n_samples
-    def simulator(self):
+    def simulate(self):
         trnsX, _ = make_classification(n_samples = self.n_samples,
                                        n_features = self.n_features,
                                        n_informative = self.n_informative,
@@ -176,6 +191,10 @@ class PradoSyntheticProcess :
         trnsX = trnsX / 100
         return trnsX
     def mean(self) :
-        return self.simulator().mean().mean()
+        return self.simulate().mean().mean()
     def var(self) :
-        return self.simulator().var().mean()
+        return self.simulate().var().mean()
+    def skew(self) :
+        return self.simulate().skew().mean()
+    def kurt(self) :
+        return  self.simulate().kurt().mean()
