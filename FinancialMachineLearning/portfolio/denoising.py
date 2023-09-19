@@ -5,7 +5,7 @@ from scipy.optimize import minimize
 def mpPDF(var, q, pts):
     eMin, eMax = var * (1 - (1. / q) ** .5) ** 2, var * (1 + (1. / q) ** .5) ** 2
     eVal = np.linspace(eMin, eMax, pts)
-    pdf = q / (2 * np.pi * var * eVal) * ((eMax - eVal) * (eVal - eMin)) ** 0.5  # np.allclose(np.flip((eMax-eVal)), (eVal-eMin))==True
+    pdf = q / (2 * np.pi * var * eVal) * ((eMax - eVal) * (eVal - eMin)) ** 0.5
     pdf = pd.Series(pdf, index = eVal)
     return pdf
 def getPCA(matrix):

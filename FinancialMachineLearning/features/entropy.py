@@ -94,7 +94,7 @@ def lempel_ziv_entropy(message : str) -> float :
         i = j + 1
     entropy = len(lib) / len(message)
     return entropy
-def plugIn(message : str, word_length : int = None) -> float :
+def plug_in_entropy(message : str, word_length : int = None) -> float :
     if word_length is None :
         word_length = 1
     pmf = prob_mass_function(message, word_length)
