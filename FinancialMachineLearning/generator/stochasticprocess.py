@@ -9,7 +9,7 @@ class GeometricBrownianMotion :
         self.n_steps = n_steps
         self.t = t
         self.T = T
-        self.S_0 = self.S_0
+        self.S_0 = S_0
 
     def get_paths(self):
         dt = self.T / self.n_steps
@@ -33,7 +33,6 @@ class GeometricBrownianMotion :
     def simulate(self):
         simulation = pd.DataFrame(self.get_paths().transpose())
         return simulation
-
 
 class OrnsteinUhlenbeckProcess:
     def __init__(self, alpha, mu, sigma, n_paths, n_steps, t, T, S_0):
@@ -66,32 +65,50 @@ class OrnsteinUhlenbeckProcess:
         variance = (1 - np.exp(-2 * self.alpha * self.t)) * (self.sigma ** 2) / (2 * self.alpha)
         return variance
 
-    def simulate(self, analytic_EM=False, plot_expected=False):
+    def simulate(self, analytic_EM = False):
         simulation = pd.DataFrame(self.get_paths(analytic_EM))
         return simulation
 
+
 class AutoRegressiveProcess:
-    def __init__(self, p, coefficients = None):
+    def __init__(self, p : int,
+                 n_paths : int,
+                 n_steps : int,
+                 t : int, T : int,
+                 S_0 : int,
+                 coefficients = None):
         self.p = p
+        self.n_paths = n_paths
+        self.n_steps = n_steps
+        self.t = t
+        self.T = T
+        self.S_0 = S_0
+
         if coefficients is None:
             self.coefficients = np.random.randn(p)
         else:
             if len(coefficients) != p:
                 raise ValueError(f"coefficients must have elements {p}")
             self.coefficients = np.array(coefficients)
+
     def mean(self):
         mean = self.coefficients.mean()
         return mean
+
     def var(self):
         return np.var(self.coefficients) / (1 - np.sum(self.coefficients) ** 2)
-    def simulate(self, n):
-        data = [0]
-        for i in range(1, n):
-            ar_term = np.sum(self.coefficients * data[-self.p:])
-            new_value = ar_term + np.random.randn()
-            data.append(new_value)
-        simulation = pd.DataFrame(data)
+
+    def simulate(self):
+        data = np.zeros((self.n_steps + 1, self.n_paths))
+        for j in range(self.n_paths):
+            for i in range(self.p, self.n_steps + 1):
+                ar_term = np.sum(self.coefficients * data[i - self.p:i, j])
+                new_value = ar_term + np.random.randn()
+                data[i, j] = new_value
+
+        simulation = pd.DataFrame(data, columns=[f'Path_{i}' for i in range(self.n_paths)])
         return simulation
+
 
 class JumpDiffusionProcess :
     def __init__(self, mu, sigma, lambdaN, eta1, eta2, p, n_paths, n_steps, t, T, S_0):
@@ -137,6 +154,6 @@ class JumpDiffusionProcess :
         variance = (self.sigma ** 2 + 2 * self.lambdaN * (self.p / (self.eta1 ** 2) + (1 - self.p) / (self.eta2 ** 2))) * self.t
         return variance
 
-    def simulate(self, plot_expected=False):
+    def simulate(self):
         simulation = pd.DataFrame(self.get_paths())
         return simulation
