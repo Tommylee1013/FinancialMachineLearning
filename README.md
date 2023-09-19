@@ -7,6 +7,7 @@
 금융 머신러닝 프로젝트를 위한 다양한 기능을 지원합니다
 
 #### Bar sampling
+![bar.png](Images%2Fbar.png)
 
 - Standard Bar : Tick Bar, Volume Bar, Dollar Bar
 - Imbalance Bar : Tick Imbalance Bar, Volume Imbalance Bar, Dollar Imbalance Bar
@@ -20,6 +21,9 @@
 - Kalman Smoothering
 
 #### Generator
+![GBM.png](Images%2FGBM.png)
+![OUprocess.png](Images%2FOUprocess.png)
+
 Stochastic Process generator. 아래와 같은 확률 과정을 생성합니다
 
 - Geometric Brownian Motion
@@ -49,12 +53,14 @@ portfolio 최적화를 위한 기능을 지원합니다. Machine Learning for As
 - Supremum augmented dickey fuller test
 
 #### Feature Importance
+![feature_importance.png](Images%2Ffeature_importance.png)
 
 - Mean Decrease Impurity (MDI)
 - Mean Decrease Accuracy (MDA)
 - Single Feature Importance (SFI)
 
 #### Useful Features
+
 
 - Concurrency
 - Volatility
@@ -66,6 +72,8 @@ portfolio 최적화를 위한 기능을 지원합니다. Machine Learning for As
 - Dynamic Z Score
 
 #### Microstructure
+![bpvol.png](Images%2Fbpvol.png)
+![vip.png](Images%2Fvip.png)
 
 - Roll Model
 - Tick Rule
