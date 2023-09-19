@@ -20,7 +20,7 @@
 - Kalman Smoothering
 
 #### generator
-Stochastic Process generator. 아래와 같은 확률 과정을 generate 합니다
+Stochastic Process generator. 아래와 같은 확률 과정을 발생시킵니다
 
 - Geometric Brownian Motion
 - Ornstein Uhlenbeck Process
