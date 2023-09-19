@@ -1,7 +1,8 @@
 import math
 from typing import Union
 import numpy as np
-
+import pandas as pd
+import scipy.stats as ss
 class discreteEntropy :
     def __init__(self, message : str, word_length : int = None) :
         self._message = message
@@ -71,6 +72,33 @@ class discreteEntropy :
             out['h'] = 0
         out['r'] = 1 - out['h'] / np.log2(len(self._message))
         return out['h']
+
+
+class ContinuousEntropy:
+    def __init__(self, ret: pd.Series, period: int):
+        self.ret = ret
+        self.period = period
+
+    def corr(self):
+        return self.ret.corr()
+
+    def optimize_bins(self, correlation: bool = False) -> int:
+        if correlation == False:
+            z = (8 + 324 * self.ret + 12 * (36 * self.ret + 729 * self.ret ** 2) ** 0.5) ** (1 / 3)
+            b = round(z / 6 + 2 / (3 * z) + 1 / 3)
+        else:
+            b = round(2 ** (-0.5) * (1 + (1 + 24 * self.ret / (1 - self.corr() ** 2)) ** 0.5) ** 0.5)
+        return int(b)
+
+    def continuous_entropy(self, correlation: bool = False) -> pd.DataFrame:
+        bin = self.optimize_bins(correlation=correlation)
+        etp = []
+        for i in range(self.period, len(self.ret)):
+            hX = ss.entropy(np.histogram(self.ret[i - self.period:i], bin)[0])
+            etp.append(hX)
+        etp = pd.DataFrame(etp, index=self.ret.index[self.period:])
+        etp.columns = ['Continuous entropy']
+        return etp
 
 def shannon_entropy(message : str) -> float :
     exr = {}
