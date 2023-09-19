@@ -2,6 +2,14 @@ import numpy as np
 import pandas as pd
 from sklearn.linear_model import LinearRegression
 
+def tick_rule(tick_prices : pd.Series):
+    price_change = tick_prices.diff()
+    aggressor = pd.Series(index=tick_prices.index, data=np.nan)
+    aggressor.iloc[0] = 1.
+    aggressor[price_change < 0] = -1.
+    aggressor[price_change > 0] = 1.
+    aggressor = aggressor.fillna(method='ffill')
+    return aggressor
 def volume_weighted_average_price(dollar_volume: list, volume: list) -> float:
     return sum(dollar_volume) / sum(volume)
 def get_avg_tick_size(tick_size_arr: list) -> float:

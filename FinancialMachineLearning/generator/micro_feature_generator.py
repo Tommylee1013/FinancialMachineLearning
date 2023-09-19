@@ -2,8 +2,7 @@ import pandas as pd
 import numpy as np
 from FinancialMachineLearning.features.entropy import shannon_entropy, plug_in_entropy, lempel_ziv_entropy, konto_entropy
 from FinancialMachineLearning.features.encoding import encode_array
-from FinancialMachineLearning.features.microstructure import get_trades_based_kyle_lambda, \
-    get_trades_based_amihud_lambda, get_trades_based_hasbrouck_lambda, get_avg_tick_size, volume_weighted_average_price
+from FinancialMachineLearning.features.microstructure import trades_based_kyle_lambda, trades_based_amihud_lambda, trades_based_hasbrouck_lambda, get_avg_tick_size, volume_weighted_average_price
 from FinancialMachineLearning.features.encoding import encode_tick_rule_array
 from FinancialMachineLearning.multiprocess.misc import crop_data_frame_in_batches
 
@@ -63,7 +62,7 @@ class MicrostructuralFeaturesGenerator:
             list_bars, stop_flag = self._extract_bars(data=batch)
 
             if to_csv is True:
-                pd.DataFrame(list_bars, columns=cols).to_csv(output_path, header=header, index=False, mode='a')
+                pd.DataFrame(list_bars, columns=cols).to_csv(output_path, header = header, index=False, mode='a')
                 header = False
             else: final_bars += list_bars
             count += 1
@@ -128,10 +127,10 @@ class MicrostructuralFeaturesGenerator:
         features.append(sum(self.tick_rule))
         features.append(volume_weighted_average_price(self.dollar_size, self.trade_size))
 
-        features.append(get_trades_based_kyle_lambda(self.price_diff, self.trade_size, self.tick_rule))  # Kyle lambda
-        features.append(get_trades_based_amihud_lambda(self.log_ret, self.dollar_size))  # Amihud lambda
+        features.append(trades_based_kyle_lambda(self.price_diff, self.trade_size, self.tick_rule))
+        features.append(trades_based_amihud_lambda(self.log_ret, self.dollar_size))
         features.append(
-            get_trades_based_hasbrouck_lambda(self.log_ret, self.dollar_size, self.tick_rule))  # Hasbrouck lambda
+            trades_based_hasbrouck_lambda(self.log_ret, self.dollar_size, self.tick_rule))
 
         encoded_tick_rule_message = encode_tick_rule_array(self.tick_rule)
         features.append(shannon_entropy(encoded_tick_rule_message))
