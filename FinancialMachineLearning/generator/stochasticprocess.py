@@ -70,27 +70,42 @@ class OrnsteinUhlenbeckProcess:
         simulation = pd.DataFrame(self.get_paths(analytic_EM))
         return simulation
 
+
 class AutoRegressiveProcess:
-    def __init__(self, p, coefficients = None):
+    def __init__(self, p, n_paths : int ,
+                 n_steps : int, t : int,
+                 T : int, S_0 : int,
+                 coefficients = None):
         self.p = p
+        self.n_paths = n_paths
+        self.n_steps = n_steps
+        self.t = t
+        self.T = T
+        self.S_0 = S_0
+
         if coefficients is None:
             self.coefficients = np.random.randn(p)
         else:
             if len(coefficients) != p:
                 raise ValueError(f"coefficients must have elements {p}")
             self.coefficients = np.array(coefficients)
+
     def mean(self):
         mean = self.coefficients.mean()
         return mean
+
     def var(self):
         return np.var(self.coefficients) / (1 - np.sum(self.coefficients) ** 2)
-    def simulate(self, n):
-        data = [0]
-        for i in range(1, n):
-            ar_term = np.sum(self.coefficients * data[-self.p:])
-            new_value = ar_term + np.random.randn()
-            data.append(new_value)
-        simulation = pd.DataFrame(data)
+
+    def simulate(self):
+        data = np.zeros((self.n_steps + 1, self.n_paths))
+        for j in range(self.n_paths):
+            for i in range(self.p, self.n_steps + 1):
+                ar_term = np.sum(self.coefficients * data[i - self.p:i, j])
+                new_value = ar_term + np.random.randn()
+                data[i, j] = new_value
+
+        simulation = pd.DataFrame(data, columns=[f'Path_{i}' for i in range(self.n_paths)])
         return simulation
 
 class JumpDiffusionProcess :
