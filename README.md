@@ -21,17 +21,20 @@
 - Kalman Smoothering
 
 #### Generator
-![GBM.png](Images%2FGBM.png)
-![OUprocess.png](Images%2FOUprocess.png)
 
 Stochastic Process generator. 아래와 같은 확률 과정을 생성합니다
 
 - Geometric Brownian Motion
+![GBM.png](Images%2FGBM.png)
 - Ornstein Uhlenbeck Process
+![OUprocess.png](Images%2FOUprocess.png)
 - Jump Diffusion Model
+![jdprocess.png](Images%2Fjdprocess.png)
 - Auto Regressive Process
+![ar.png](Images%2Far.png)
 - Microstructural Process Generator
 - de Prado Synthetic Process
+![prado.png](Images%2Fprado.png)
 
 #### Labeling
 Machine Learning 학습을 위한 label분류를 진행합니다
@@ -54,10 +57,12 @@ portfolio 최적화를 위한 기능을 지원합니다. Machine Learning for As
 - Supremum augmented dickey fuller test
 
 #### Feature Importance
-![feature_importance.png](Images%2Ffeature_importance.png)
+
+Machine Learning 특성 분석을 위한 Feature Importance 계산 기능을 지원합니다 (AFML Chapter 8)
 
 - Mean Decrease Impurity (MDI)
 - Mean Decrease Accuracy (MDA)
+![feature_importance.png](Images%2Ffeature_importance.png)
 - Single Feature Importance (SFI)
 
 #### Useful Features
@@ -68,19 +73,24 @@ portfolio 최적화를 위한 기능을 지원합니다. Machine Learning for As
   - Auto Regressive Conditional Heteroscedasticity Model
   - General Auto Regressive Conditional Heteroscedasticity Model
 - Discrete Entropy
+![etp_vpin.png](Images%2Fetp_vpin.png)
+![vpin_etp100.png](Images%2Fvpin_etp100.png)
 - Approximate Entropy
 - Fractionally Differentiated features
 - Dynamic Z Score
 
 #### Microstructure
-![bpvol.png](Images%2Fbpvol.png)
-![vip.png](Images%2Fvip.png)
 
+시장미시구조적 특성 (Lopez de Prado, 2018)
 - Roll Model
+![roll_model.png](Images%2Froll_model.png)
 - Tick Rule
 - Corwin Schultz
 - Market Lambda : Kyle, Amihud, Hasbrouck
+- Becker Parkinson Volatility
+![bpvol.png](Images%2Fbpvol.png)
 - Volume-Synchronized Probability of Informed Trading Model
+![vip.png](Images%2Fvip.png)
 
 #### Modeling
 

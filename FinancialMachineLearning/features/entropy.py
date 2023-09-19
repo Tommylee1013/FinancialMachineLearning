@@ -75,7 +75,7 @@ class discreteEntropy :
 
 
 class ContinuousEntropy:
-    def __init__(self, ret: pd.Series, period: int):
+    def __init__(self, ret: pd.DataFrame, period: int):
         self.ret = ret
         self.period = period
 
@@ -83,20 +83,21 @@ class ContinuousEntropy:
         return self.ret.corr()
 
     def optimize_bins(self, correlation: bool = False) -> int:
+        len_ret = len(self.ret)
         if correlation == False:
-            z = (8 + 324 * self.ret + 12 * (36 * self.ret + 729 * self.ret ** 2) ** 0.5) ** (1 / 3)
+            z = (8 + 324 * len_ret + 12 * (36 * len_ret + 729 * len_ret ** 2) ** 0.5) ** (1 / 3)
             b = round(z / 6 + 2 / (3 * z) + 1 / 3)
         else:
-            b = round(2 ** (-0.5) * (1 + (1 + 24 * self.ret / (1 - self.corr() ** 2)) ** 0.5) ** 0.5)
+            b = round(2 ** (-0.5) * (1 + (1 + 24 * len_ret / (1 - self.corr() ** 2)) ** 0.5) ** 0.5)
         return int(b)
 
     def continuous_entropy(self, correlation: bool = False) -> pd.DataFrame:
-        bin = self.optimize_bins(correlation=correlation)
+        bin = self.optimize_bins(correlation = correlation)
         etp = []
         for i in range(self.period, len(self.ret)):
             hX = ss.entropy(np.histogram(self.ret[i - self.period:i], bin)[0])
             etp.append(hX)
-        etp = pd.DataFrame(etp, index=self.ret.index[self.period:])
+        etp = pd.DataFrame(etp, index = self.ret.index[self.period:])
         etp.columns = ['Continuous entropy']
         return etp
 
@@ -178,6 +179,3 @@ def konto_entropy(message: str, window: int = 0) -> float:
         out['h'] = 0
     out['r'] = 1 - out['h'] / np.log2(len(message))
     return out['h']
-
-class ContinuousEntropy :
-    pass
