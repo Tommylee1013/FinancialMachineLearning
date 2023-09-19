@@ -349,7 +349,7 @@ class microBars(microBaseBars):
         for _, row in data.iterrows():
             # Set variables
             date_time = row.iloc[0]
-            price = np.float(row.iloc[1])
+            price = np.float64(row.iloc[1])
             volume = row.iloc[2]
             high_price, low_price = self._update_high_low(
                 high_price, low_price, price)
@@ -376,10 +376,10 @@ class microBars(microBaseBars):
         if self.flag and self.cache:
             last_entry = self.cache[-1]
             cum_ticks = int(last_entry.cum_ticks)
-            cum_dollar_value = np.float(last_entry.cum_dollar)
+            cum_dollar_value = np.float64(last_entry.cum_dollar)
             cum_volume = last_entry.cum_volume
-            low_price = np.float(last_entry.low)
-            high_price = np.float(last_entry.high)
+            low_price = np.float64(last_entry.low)
+            high_price = np.float64(last_entry.high)
         else:
             cum_ticks, cum_dollar_value, cum_volume, high_price, low_price = 0, 0, 0, -np.inf, np.inf
 
