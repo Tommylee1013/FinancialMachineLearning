@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
 from typing import Union
+from sklearn.datasets import make_classification
+import datetime
 class GeometricBrownianMotion :
     def __init__(self, mu : Union[int, float], sigma : float, n_paths : int,
                  n_steps : int, start , end, initial_price : Union[int, float]) -> None:
@@ -154,3 +156,26 @@ class JumpDiffusionProcess :
     def simulate(self) -> pd.DataFrame:
         simulation = pd.DataFrame(self.get_paths())
         return simulation
+
+class PradoSyntheticProcess :
+    def __init__(self, n_features : int, n_informative : int, n_redundant : int, n_samples : int = 1000) -> None:
+        self.n_features = n_features
+        self.n_informative = n_informative
+        self.n_redundant = n_redundant
+        self.n_samples = n_samples
+    def simulator(self):
+        trnsX, _ = make_classification(n_samples = self.n_samples,
+                                       n_features = self.n_features,
+                                       n_informative = self.n_informative,
+                                       n_redundant = self.n_redundant,
+                                       shuffle = False)
+        start = datetime.datetime.today()
+        end = start + pd.offsets.BDay(self.n_samples - 1)
+        df0 = pd.date_range(start=start, end=end, freq='B')
+        trnsX = pd.DataFrame(trnsX, index=df0)
+        trnsX = trnsX / 100
+        return trnsX
+    def mean(self) :
+        return self.simulator().mean().mean()
+    def var(self) :
+        return self.simulator().var().mean()

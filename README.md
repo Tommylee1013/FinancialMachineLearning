@@ -31,6 +31,7 @@ Stochastic Process generator. 아래와 같은 확률 과정을 생성합니다
 - Jump Diffusion Model
 - Auto Regressive Process
 - Microstructural Process Generator
+- de Prado Synthetic Process
 
 #### Labeling
 Machine Learning 학습을 위한 label분류를 진행합니다
@@ -60,7 +61,7 @@ portfolio 최적화를 위한 기능을 지원합니다. Machine Learning for As
 - Single Feature Importance (SFI)
 
 #### Useful Features
-
+![ffd.png](Images%2Fffd.png)
 
 - Concurrency
 - Volatility
@@ -98,3 +99,7 @@ portfolio 최적화를 위한 기능을 지원합니다. Machine Learning for As
 - RSI
 - MACD
 - Moving Average
+
+### 2. Example Notes
+
+library 주요 기능을 사용하는 jupyter notebook 예제를 제공합니다
