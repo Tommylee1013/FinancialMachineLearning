@@ -197,7 +197,7 @@ def confirm_and_cast_to_df(d_vars):
     if any_series and not all_series:
         for k in d_vars:
             if not isinstance(d_vars[k], pd.Series):
-                d_vars[k] = pd.Series(data=np.array([d_vars[k] for i in range(ser_len)]), index=idx)
+                d_vars[k] = pd.Series(data=np.array([d_vars[k] for i in range(ser_len)]), index = idx)
 
     events = pd.concat(list(d_vars.values()), axis=1)
     events.columns = list(d_vars.keys())

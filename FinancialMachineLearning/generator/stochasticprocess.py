@@ -35,7 +35,7 @@ class GeometricBrownianMotion :
 
     def simulate(self) -> pd.DataFrame:
         start = datetime.datetime.today()
-        end = start + pd.offsets.BDay(self.n_steps)
+        end = start + pd.offsets.BDay(self.n_steps+1)
         df0 = pd.date_range(start=start, end=end, freq='B')
         simulation = pd.DataFrame(self.get_paths().transpose(), index = df0)
         return simulation
@@ -72,9 +72,9 @@ class OrnsteinUhlenbeckProcess:
     def var(self) -> float:
         variance = (1 - np.exp(-2 * self.alpha * self.t)) * (self.sigma ** 2) / (2 * self.alpha)
         return variance
-    def simulate(self, analytic_EM=False) -> pd.DataFrame:
+    def simulate(self, analytic_EM = False) -> pd.DataFrame:
         start = datetime.datetime.today()
-        end = start + pd.offsets.BDay(self.n_steps)
+        end = start + pd.offsets.BDay(self.n_steps+1)
         df0 = pd.date_range(start=start, end=end, freq='B')
         simulation = pd.DataFrame(self.get_paths(analytic_EM), index = df0)
         return simulation
@@ -92,11 +92,11 @@ class AutoRegressiveProcess:
         self.S_0 = initial_price
 
         if coefficients is None:
-            self.coefficients = np.random.randn(p)
+            self.coefficients = np.random.randn(p) / 100
         else:
             if len(coefficients) != p:
                 raise ValueError(f"coefficients must have elements {p}")
-            self.coefficients = np.array(coefficients)
+            self.coefficients = np.array(coefficients) / 100
 
     def mean(self) -> float:
         mean = self.coefficients.mean()
@@ -114,7 +114,7 @@ class AutoRegressiveProcess:
                 data[i, j] = new_value
 
         start = datetime.datetime.today()
-        end = start + pd.offsets.BDay(self.n_steps)
+        end = start + pd.offsets.BDay(self.n_steps+1)
         df0 = pd.date_range(start = start, end = end, freq='B')
 
         simulation = pd.DataFrame(data, columns = [f'Path_{i}' for i in range(self.n_paths)], index = df0)
@@ -167,7 +167,7 @@ class JumpDiffusionProcess :
 
     def simulate(self) -> pd.DataFrame:
         start = datetime.datetime.today()
-        end = start + pd.offsets.BDay(self.n_steps)
+        end = start + pd.offsets.BDay(self.n_steps+1)
         df0 = pd.date_range(start=start, end=end, freq='B')
         simulation = pd.DataFrame(self.get_paths(), index = df0)
         return simulation
@@ -185,7 +185,7 @@ class PradoSyntheticProcess :
                                        n_redundant = self.n_redundant,
                                        shuffle = False)
         start = datetime.datetime.today()
-        end = start + pd.offsets.BDay(self.n_samples - 1)
+        end = start + pd.offsets.BDay(self.n_samples)
         df0 = pd.date_range(start=start, end=end, freq='B')
         trnsX = pd.DataFrame(trnsX, index=df0)
         trnsX = trnsX / 100

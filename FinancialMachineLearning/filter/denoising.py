@@ -1,6 +1,8 @@
 import numpy as np, pandas as pd
 from sklearn.neighbors import KernelDensity
 from scipy.optimize import minimize
+from scipy.linalg import block_diag
+from sklearn.covariance import LedoitWolf
 
 def mpPDF(var, q, pts):
     eMin, eMax = var * (1 - (1. / q) ** .5) ** 2, var * (1 + (1. / q) ** .5) ** 2
@@ -88,7 +90,7 @@ def formTrueMatrix(nBlocks,bSize,bCorr):
     cov0=corr2cov(corr0,std0)
     mu0=np.random.normal(std0,std0,cov0.shape[0]).reshape(-1,1)
     return mu0,cov0
-def simCovMu(mu0,cov0,nObs,shrink=False):
+def simCovMu(mu0,cov0,nObs,shrink = False):
     x=np.random.multivariate_normal(mu0.flatten(),cov0,size=nObs)
     mu1 = x.mean(axis=0).reshape(-1,1)
     if shrink: cov1=LedoitWolf().fit(x).covariance_
