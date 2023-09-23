@@ -19,6 +19,8 @@
 - ETF-trick Filtering
 - Kalman Filtering
 - Kalman Smoothering
+- Denoising
+![denoising.png](Images%2Fdenoising.png)
 
 #### Generator
 
@@ -46,8 +48,11 @@ Machine Learning 학습을 위한 label분류를 진행합니다
 #### Portfolio
 portfolio 최적화를 위한 기능을 지원합니다. Machine Learning for Asset Manager(2019, de prado)
 
-- Denoising
-- Detoning
+- Historical Risk Parity
+![hrp.png](Images%2Fhrp.png)
+- Critical Line Algorithms
+- Mean Variance Optimization
+- Black Litterman Optimization
 
 #### Regime Change
 시장 국면 전환 사후 검정 모형입니다
