@@ -71,22 +71,34 @@ portfolio 최적화를 위한 기능을 지원합니다. Machine Learning for As
 Machine Learning 특성 분석을 위한 Feature Importance 계산 기능을 지원합니다 (AFML Chapter 8)
 
 - Mean Decrease Impurity (MDI)
+![mdi.png](Images%2Fmdi.png)
+
 - Mean Decrease Accuracy (MDA)
 ![feature_importance.png](Images%2Ffeature_importance.png)
+
 - Single Feature Importance (SFI)
+![sfi.png](Images%2Fsfi.png)
+ㅁ
 
 #### Useful Features
-![ffd.png](Images%2Fffd.png)
+
 
 - Concurrency
+![concurrency.png](Images%2Fconcurrency.png)
+
 - Volatility
   - Auto Regressive Conditional Heteroscedasticity Model
+  ![arch.png](Images%2Farch.png)
+  
   - General Auto Regressive Conditional Heteroscedasticity Model
+  ![garch.png](Images%2Fgarch.png)
 - Discrete Entropy
 ![etp_vpin.png](Images%2Fetp_vpin.png)
 ![vpin_etp100.png](Images%2Fvpin_etp100.png)
 - Approximate Entropy
 - Fractionally Differentiated features
+![ffd.png](Images%2Fffd.png)
+
 - Dynamic Z Score
 
 #### Microstructure
@@ -96,7 +108,14 @@ Machine Learning 특성 분석을 위한 Feature Importance 계산 기능을 지
 ![roll_model.png](Images%2Froll_model.png)
 - Tick Rule
 - Corwin Schultz
+![corwinschultz.png](Images%2Fcorwinschultz.png)
+
 - Market Lambda : Kyle, Amihud, Hasbrouck
+![kyle.png](Images%2Fkyle.png)
+
+![amihud.png](Images%2Famihud.png)
+
+![hasbrouck.png](Images%2Fhasbrouck.png)
 - Becker Parkinson Volatility
 ![bpvol.png](Images%2Fbpvol.png)
 - Volume-Synchronized Probability of Informed Trading Model
