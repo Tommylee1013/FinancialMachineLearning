@@ -50,8 +50,13 @@ portfolio 최적화를 위한 기능을 지원합니다. Machine Learning for As
 
 - Historical Risk Parity
 ![hrp.png](Images%2Fhrp.png)
+
 - Critical Line Algorithms
-- Mean Variance Optimization
+![cla.png](Images%2Fcla.png)
+
+- Inverse Variance Optimization
+![ivp.png](Images%2Fivp.png)
+
 - Black Litterman Optimization
 
 #### Regime Change
