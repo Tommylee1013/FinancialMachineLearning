@@ -3,6 +3,7 @@ from typing import Union
 import numpy as np
 import pandas as pd
 import scipy.stats as ss
+from sklearn.metrics import mutual_info_score
 class discreteEntropy :
     def __init__(self, message : str, word_length : int = None) :
         self._message = message
@@ -73,7 +74,6 @@ class discreteEntropy :
         out['r'] = 1 - out['h'] / np.log2(len(self._message))
         return out['h']
 
-
 class ContinuousEntropy:
     def __init__(self, ret: pd.DataFrame, period: int):
         self.ret = ret
@@ -100,6 +100,7 @@ class ContinuousEntropy:
         etp = pd.DataFrame(etp, index = self.ret.index[self.period:])
         etp.columns = ['Continuous entropy']
         return etp
+
 
 def shannon_entropy(message : str) -> float :
     exr = {}
