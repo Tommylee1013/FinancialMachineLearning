@@ -35,7 +35,7 @@ def detoning(corr, eigenvalues, eigenvectors, market_component = 1):
     corr = covariance_to_correlation(corr)
     return corr
 
-def optimizing_portfolio(cov,mu = None):
+def optimizing_portfolio(cov, mu = None):
     inv = np.linalg.inv(cov)
     ones = np.ones(shape = (inv.shape[0],1))
     if mu is None : mu = ones
@@ -138,6 +138,7 @@ class GenerateSamples:
         eVal0, eVec0 = GenerateSamples.getPCA(corr0)
         eMax0, var0 = GenerateSamples.findMaxEval(np.diag(eVal0), q, bWidth)
         nFacts0 = eVal0.shape[0] - np.diag(eVal0)[::-1].searchsorted(eMax0)
-        corr1 = DenoiseCorrelation.constant_residual_eigenvalue(eVal0, eVec0, nFacts0)
+        temp = DenoiseCorrelation(eVal0, eVec0, nFacts0)
+        corr1 = temp.constant_residual_eigenvalue()
         cov1 = correlation_to_covariance(corr1, np.diag(cov0) ** .5)
         return cov1
