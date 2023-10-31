@@ -23,7 +23,7 @@ class StandardBars(BaseBars):
             # Set variables
             date_time = row[0]
             self.tick_num += 1
-            price = np.float(row[1])
+            price = np.float64(row[1])
             volume = row[2]
             dollar_value = price * volume
             signed_tick = self._apply_tick_rule(price)

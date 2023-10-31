@@ -36,7 +36,6 @@ def roll_impact(close_prices: pd.Series, dollar_volume: pd.Series, window: int =
     roll_measure_ = roll_measure(close_prices, window)
     return roll_measure_ / dollar_volume
 
-
 class CorwinSchultz :
     def __init__(self, high : pd.Series, low : pd.Series) -> None:
         self.high = high
