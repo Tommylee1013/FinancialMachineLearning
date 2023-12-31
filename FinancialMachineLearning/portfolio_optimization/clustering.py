@@ -36,3 +36,10 @@ def nested_clustered_optimization(cov : np.array, mu = None, maxNumClusters = No
     wInter = pd.Series(optimizing_portfolio(cov_, mu_).flatten(), index = cov_.index)
     nco = wIntra.mul(wInter, axis = 1).sum(axis = 1).values.reshape(-1, 1)
     return nco
+
+def getPCA(matrix):
+    eVal, eVec = np.linalg.eig(matrix)
+    indices = eVal.argsort()[::-1]
+    eVal, eVec = eVal[indices], eVec[:, indices]
+    eVal = np.diagflat(eVal)
+    return eVal, eVec
