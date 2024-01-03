@@ -20,17 +20,17 @@ def mean_decrease_accuracy(model, X, y, cv_gen, sample_weight=None, scoring=log_
     if sample_weight is None:
         sample_weight = np.ones((X.shape[0],))
 
-    fold_metrics_values, features_metrics_values = pd.Series(), pd.DataFrame(columns=X.columns)
+    fold_metrics_values, features_metrics_values = pd.Series(dtype = float), pd.DataFrame(columns=X.columns)
 
     for i, (train, test) in enumerate(cv_gen.split(X=X)):
-        fit = model.fit(X=X.iloc[train, :], y=y.iloc[train], sample_weight=sample_weight[train])
+        fit = model.fit(X=X.iloc[train, :], y=y.iloc[train], sample_weight = sample_weight[train])
         pred = fit.predict(X.iloc[test, :])
         if scoring == log_loss:
             prob = fit.predict_proba(X.iloc[test, :])
-            fold_metrics_values.loc[i] = -scoring(y.iloc[test], prob, sample_weight=sample_weight[test],
-                                                  labels=model.classes_)
+            fold_metrics_values.loc[i] = -scoring(y.iloc[test], prob, sample_weight = sample_weight[test],
+                                                  labels = model.classes_)
         else:
-            fold_metrics_values.loc[i] = scoring(y.iloc[test], pred, sample_weight=sample_weight[test])
+            fold_metrics_values.loc[i] = scoring(y.iloc[test], pred, sample_weight = sample_weight[test])
         for j in X.columns:
             X1_ = X.iloc[test, :].copy(deep=True)
             np.random.shuffle(X1_[j].values)

@@ -2,7 +2,8 @@ import numpy as np
 from numba import jit
 from numba import float64
 from numba import int64
-@jit((float64[:], int64), nopython = False, nogil = True)
+
+@jit((float64[:], int64), nopython = True, nogil = True)
 def ewma(arr_in, window):
     arr_length = arr_in.shape[0]
     ewma_arr = np.empty(arr_length, dtype=float64)
