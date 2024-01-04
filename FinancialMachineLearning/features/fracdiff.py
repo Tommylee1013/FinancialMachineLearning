@@ -31,7 +31,7 @@ class FractionalDifferentiatedFeatures :
         df = {}
         for name in series.columns:
             seriesF = series[[name]].fillna(method='ffill').dropna()
-            df_ = pd.Series()
+            df_ = pd.Series(dtype = float)
             for iloc1 in range(width, seriesF.shape[0]):
                 loc0 = seriesF.index[iloc1 - width]
                 loc1 = seriesF.index[iloc1]
@@ -51,7 +51,7 @@ class FractionalDifferentiatedFeatures :
         df = {}
         for name in series.columns:
             seriesF = series[[name]].fillna(method='ffill').dropna()
-            df_ = pd.Series()
+            df_ = pd.Series(dtype = float)
             for iloc in range(skip, seriesF.shape[0]):
                 loc = seriesF.index[iloc]
 
