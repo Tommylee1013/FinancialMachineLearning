@@ -14,7 +14,7 @@ def apply_pt_sl_on_t1(close, events, pt_sl, molecule):
         stop_loss = -stop_loss_multiple * events_['trgt']
     else:
         stop_loss = pd.Series(index=events.index)
-    for loc, vertical_barrier in events_['t1'].fillna(close.index[-1]).iteritems():
+    for loc, vertical_barrier in events_['t1'].fillna(close.index[-1]).items():
         closing_prices = close[loc: vertical_barrier]
         cum_returns = (closing_prices / close[loc] - 1) * events_.at[loc, 'side']
         out.loc[loc, 'sl'] = cum_returns[cum_returns < stop_loss[loc]].index.min()

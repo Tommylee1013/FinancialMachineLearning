@@ -8,12 +8,12 @@ def concurrent_events(close_series_index, label_endtime, molecule):
 
     nearest_index = close_series_index.searchsorted(np.array([label_endtime.index[0], label_endtime.max()]))
     count = pd.Series(0, index=close_series_index[nearest_index[0]:nearest_index[1] + 1])
-    for t_in, t_out in label_endtime.iteritems():
+    for t_in, t_out in label_endtime.items():
         count.loc[t_in:t_out] += 1
     return count.loc[molecule[0]:label_endtime[molecule].max()]
 def average_uniqueness(label_endtime, num_conc_events, molecule):
     wght = pd.Series(index=molecule)
-    for t_in, t_out in label_endtime.loc[wght.index].iteritems():
+    for t_in, t_out in label_endtime.loc[wght.index].items():
         wght.loc[t_in] = (1. / num_conc_events.loc[t_in:t_out]).mean()
     return wght
 def average_uniqueness_triple_barrier(triple_barrier_events, close_series, num_threads):
