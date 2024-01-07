@@ -51,7 +51,10 @@ class PurgedKFold(KFold):
             if end_ix < X.shape[0]:
                 end_ix += embargo
 
-            test_times = pd.Series(index=[self.samples_info_sets[start_ix]], data=[self.samples_info_sets[end_ix-1]])
+            test_times = pd.Series(
+                index=[self.samples_info_sets.iloc[start_ix]],
+                data=[self.samples_info_sets.iloc[end_ix-1]]
+            )
             train_times = ml_get_train_times(self.samples_info_sets, test_times)
 
             train_indices = []
