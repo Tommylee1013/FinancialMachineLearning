@@ -3,6 +3,11 @@ import pandas as pd
 import scipy.stats as ss
 
 def timing_of_flattening_and_flips(target_positions : pd.Series) -> pd.DatetimeIndex:
+    '''
+    get betting timing
+    :param target_positions: pd.Series
+    :return: pd.DatetimeIndex
+    '''
     empty_positions = target_positions[(target_positions == 0)].index
     previous_positions = target_positions.shift(1)
     previous_positions = previous_positions[(previous_positions != 0)].index
@@ -10,8 +15,10 @@ def timing_of_flattening_and_flips(target_positions : pd.Series) -> pd.DatetimeI
     multiplied_posions = target_positions.iloc[1:] * target_positions.iloc[:-1].values
     flips = multiplied_posions[(multiplied_posions < 0)].index
     flips_and_flattenings = flattening.union(flips).sort_values()
+
     if target_positions.index[-1] not in flips_and_flattenings:
         flips_and_flattenings = flips_and_flattenings.append(target_positions.index[-1:])
+
     return flips_and_flattenings
 
 def average_holding_period(target_positions : pd.Series) -> float :
@@ -43,13 +50,17 @@ def average_holding_period(target_positions : pd.Series) -> float :
     return avg_holding_period
 
 def bets_concentration(returns: pd.Series) -> float:
+    '''
+    get concentrations derived from HHI(Herfindahl - Hirschman Index)
+    :param returns: pd.Series
+    :return: float
+    '''
     if returns.shape[0] <= 2:
         return float('nan')
     weights = returns / returns.sum()
     hhi = (weights ** 2).sum()
     hhi = float((hhi - returns.shape[0] ** (-1)) / (1 - returns.shape[0] ** (-1)))
     return hhi
-
 
 def all_bets_concentration(returns: pd.Series, frequency: str = 'M') -> tuple:
     positive_concentration = bets_concentration(returns[returns >= 0])
@@ -70,8 +81,7 @@ def drawdown_and_time_under_water(returns: pd.Series, dollars: bool = False) -> 
         drawdown = high_watermarks['hwm'] - high_watermarks['min']
     else:
         drawdown = 1 - high_watermarks['min'] / high_watermarks['hwm']
-    time_under_water = ((high_watermarks.index[1:] -
-                         high_watermarks.index[:-1]) / np.timedelta64(1, 'Y')).values
+    time_under_water = ((high_watermarks.index[1:] - high_watermarks.index[:-1]).days / 365.25)
     time_under_water = pd.Series(time_under_water, index=high_watermarks.index[:-1])
     return drawdown, time_under_water
 

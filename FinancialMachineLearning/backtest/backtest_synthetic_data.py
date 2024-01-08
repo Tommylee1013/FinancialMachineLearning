@@ -13,6 +13,7 @@ def synthetic_simulation(
         rSLm : np.linspace = np.linspace(0.5, 10, 20), # 손절
         seed : int = 0
 ) :
+    print(f'Total {len(rPT) * len(rSLm)} iterations will be held.')
     phi, output1 = 2 ** (-1./coeffs['hl']), []
     for comb_ in tqdm(product(rPT, rSLm)):
         output2 = []
