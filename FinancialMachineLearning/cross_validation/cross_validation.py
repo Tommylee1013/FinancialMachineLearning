@@ -89,16 +89,18 @@ def ml_cross_val_score(
         ret_scores.append(score)
     return np.array(ret_scores)
 
-def grid_search_cross_validation(feat,
-                                 label : pd.Series,
-                                 samples_info_sets : pd.Series,
-                                 pipe_clf, param_grid,
-                                 cv : int = 3,
-                                 bagging : list = [0, None, 1],
-                                 random_search_iterator : int = 0,
-                                 n_jobs : int = -1,
-                                 pct_embargo : float = 0.0,
-                                 **fit_params) :
+def grid_search_cross_validation(
+        feat,
+        label : pd.Series,
+        samples_info_sets : pd.Series,
+        pipe_clf,
+        param_grid,
+        cv : int = 3,
+        bagging : list = [0, None, 1],
+        random_search_iterator : int = 0,
+        n_jobs : int = -1,
+        pct_embargo : float = 0.0,
+        **fit_params) :
     if set(label.values) == {0,1} : scoring = 'f1'
     else : scoring = 'neg_log_loss'
 

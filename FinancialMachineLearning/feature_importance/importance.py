@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from sklearn.metrics import log_loss
 import matplotlib.pyplot as plt
-from FinancialMachineLearning.machine_learning.cross_validation import ml_cross_val_score
+from FinancialMachineLearning.cross_validation.cross_validation import ml_cross_val_score
 
 def mean_decrease_impurity(model, feature_names):
     feature_imp_df = {i: tree.feature_importances_ for i, tree in enumerate(model.estimators_)}
