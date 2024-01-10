@@ -1,6 +1,38 @@
 import numpy as np
 import pandas as pd
 import scipy.stats as ss
+from scipy.stats import norm
+
+class PSR:
+    def __init__(self, stats, sr_ref, obs, prob):
+        self.PSR = 0
+        self.minTRL = 0
+        self.stats = stats
+        self.sr_ref = sr_ref
+        self.obs = obs
+        self.prob = prob
+
+    def set_PSR(self, moments=4):
+        stats = [0, 0, 0, 3]
+        stats[:moments] = self.stats[:moments]
+        sr = self.stats[0] / self.stats[1]
+        self.PSR = norm.cdf((sr - self.sr_ref) * (self.obs - 1) ** 0.5 / \
+                            (1 - sr * stats[2] + sr ** 2 * (stats[3] - 1) / 4.) ** 0.5)
+
+    def set_TRL(self, moments):
+        stats = [0, 0, 0, 3]
+        stats[:moments] = self.stats[:moments]
+        sr = self.stats[0] / self.stats[1]
+        self.minTRL = 1 + (1 - stats[2] * sr + (stats[3] - 1) / 4. * sr ** 2) * \
+                      (norm.ppf(self.prob) / (sr - self.sr_ref)) ** 2
+
+    def get_PSR(self, moments):
+        self.set_PSR(moments)
+        return self.PSR
+
+    def get_TRL(self, moments):
+        self.set_TRL(moments)
+        return self.minTRL
 
 class ProbSharpeRatio:
     def __init__(
@@ -44,7 +76,7 @@ class ProbSharpeRatio:
             # Find direction and normalize
             self.iter += 1
             w = self.step_size(w, d1Z)
-            if w is None: return
+            #if w is None: return
         return
 
     def check_bounds(self, w):
@@ -56,14 +88,16 @@ class ProbSharpeRatio:
         return flag
 
     def step_size(self, w, d1Z):
-        # determine step size for next iteration
-        x = dict()
-        for i in range(len(d1Z)):
-            if d1Z[i] != 0: x[abs(d1Z[i])] = 1
-        if len(x) == 0: return
-        index = x[max(x)]
-        w[index, 0] += self.delta / d1Z[index]
-        w /= sum(w)
+        learning_rate = self.delta
+
+        # d1Z를 NumPy 배열로 변환하고 w와 동일한 형태로 만듭니다.
+        d1Z_array = np.array(d1Z).reshape(w.shape)
+
+        # 가중치 업데이트
+        w += learning_rate * d1Z_array
+        w = np.clip(w, 0, 1)  # 가중치를 경계 내에 유지합니다.
+        w /= np.sum(w)  # 가중치 정규화
+
         return w
 
     def get_d1Zs(self, mean, w):
