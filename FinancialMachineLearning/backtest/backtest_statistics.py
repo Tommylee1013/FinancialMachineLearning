@@ -2,37 +2,22 @@ import numpy as np
 import pandas as pd
 import scipy.stats as ss
 from scipy.stats import norm
+from scipy import stats as scipy_stats
 
-class PSR:
-    def __init__(self, stats, sr_ref, obs, prob):
-        self.PSR = 0
-        self.minTRL = 0
-        self.stats = stats
-        self.sr_ref = sr_ref
-        self.obs = obs
-        self.prob = prob
+def skew_to_alpha(skew):
+    d = (np.pi / 2 * ((abs(skew) ** (2 / 3)) / (abs(skew) ** (2 / 3) + ((4 - np.pi) / 2) ** (2 / 3)))) ** 0.5
+    a = (d / ((1 - d ** 2) ** .5))
+    return a * np.sign(skew)
 
-    def set_PSR(self, moments=4):
-        stats = [0, 0, 0, 3]
-        stats[:moments] = self.stats[:moments]
-        sr = self.stats[0] / self.stats[1]
-        self.PSR = norm.cdf((sr - self.sr_ref) * (self.obs - 1) ** 0.5 / \
-                            (1 - sr * stats[2] + sr ** 2 * (stats[3] - 1) / 4.) ** 0.5)
 
-    def set_TRL(self, moments):
-        stats = [0, 0, 0, 3]
-        stats[:moments] = self.stats[:moments]
-        sr = self.stats[0] / self.stats[1]
-        self.minTRL = 1 + (1 - stats[2] * sr + (stats[3] - 1) / 4. * sr ** 2) * \
-                      (norm.ppf(self.prob) / (sr - self.sr_ref)) ** 2
-
-    def get_PSR(self, moments):
-        self.set_PSR(moments)
-        return self.PSR
-
-    def get_TRL(self, moments):
-        self.set_TRL(moments)
-        return self.minTRL
+def moments(returns):
+    if type(returns) != pd.DataFrame:
+        return pd.Series({'mean': np.mean(returns),
+                          'std': np.std(returns, ddof=1),
+                          'skew': scipy_stats.skew(returns),
+                          'kurt': scipy_stats.kurtosis(returns, fisher=False)})
+    else:
+        return returns.apply(moments, axis=1)
 
 class ProbSharpeRatio:
     def __init__(
@@ -336,8 +321,41 @@ def sharpe_ratio(returns: pd.Series, cumulative: bool = False,
 
     return sharpe_r
 
+def estimated_sharpe_ratio(returns):
+    return returns.mean() / returns.std(ddof=1)
 
-def probabalistic_sharpe_ratio(observed_sr: float, benchmark_sr: float,
+def ann_estimated_sharpe_ratio(returns=None, periods=261, *, sr=None):
+    if sr is None:
+        sr = estimated_sharpe_ratio(returns)
+    sr = sr * np.sqrt(periods)
+    return sr
+
+def estimated_sharpe_ratio_stdev(returns=None, *, n=None, skew=None, kurtosis=None, sr=None):
+    if type(returns) != pd.DataFrame:
+        _returns = pd.DataFrame(returns)
+    else:
+        _returns = returns.copy()
+
+    if n is None:
+        n = len(_returns)
+    if skew is None:
+        skew = pd.Series(scipy_stats.skew(_returns), index=_returns.columns)
+    if kurtosis is None:
+        kurtosis = pd.Series(scipy_stats.kurtosis(_returns, fisher=False), index=_returns.columns)
+    if sr is None:
+        sr = estimated_sharpe_ratio(_returns)
+
+    sr_std = np.sqrt((1 + (0.5 * sr ** 2) - (skew * sr) + (((kurtosis - 3) / 4) * sr ** 2)) / (n - 1))
+
+    if type(returns) == pd.DataFrame:
+        sr_std = pd.Series(sr_std, index=returns.columns)
+    elif type(sr_std) not in (float, np.float64, pd.DataFrame):
+        sr_std = sr_std.values[0]
+
+    return sr_std
+
+
+def probabilistic_sharpe_ratio(observed_sr: float, benchmark_sr: float,
                                number_of_returns: int, skewness_of_returns: float = 0,
                                kurtosis_of_returns: float = 3) -> float:
     probab_sr = ss.norm.cdf(((observed_sr - benchmark_sr) * (number_of_returns - 1) ** (1 / 2)) / \
@@ -346,7 +364,6 @@ def probabalistic_sharpe_ratio(observed_sr: float, benchmark_sr: float,
 
     return probab_sr
 
-
 def deflated_sharpe_ratio(observed_sr: float, sr_estimates: list,
                           number_of_returns: int, skewness_of_returns: float = 0,
                           kurtosis_of_returns: float = 3) -> float:
@@ -354,7 +371,7 @@ def deflated_sharpe_ratio(observed_sr: float, sr_estimates: list,
                    ((1 - np.euler_gamma) * ss.norm.ppf(1 - 1 / len(sr_estimates)) +
                     np.euler_gamma * ss.norm.ppf(1 - 1 / len(sr_estimates) * np.e ** (-1)))
 
-    deflated_sr = probabalistic_sharpe_ratio(observed_sr, benchmark_sr, number_of_returns,
+    deflated_sr = probabilistic_sharpe_ratio(observed_sr, benchmark_sr, number_of_returns,
                                              skewness_of_returns, kurtosis_of_returns)
 
     return deflated_sr
@@ -369,3 +386,50 @@ def minimum_track_record_length(observed_sr: float, benchmark_sr: float,
                        (ss.norm.ppf(1 - alpha) / (observed_sr - benchmark_sr)) ** (2)
 
     return track_rec_length
+
+def min_track_record_length(returns=None, sr_benchmark=0.0, prob=0.95, *, n=None, sr=None, sr_std=None):
+    if n is None:
+        n = len(returns)
+    if sr is None:
+        sr = estimated_sharpe_ratio(returns)
+    if sr_std is None:
+        sr_std = estimated_sharpe_ratio_stdev(returns, sr=sr)
+
+    min_trl = 1 + (sr_std ** 2 * (n - 1)) * (scipy_stats.norm.ppf(prob) / (sr - sr_benchmark)) ** 2
+
+    if type(returns) == pd.DataFrame:
+        min_trl = pd.Series(min_trl, index=returns.columns)
+    elif type(min_trl) not in (float, np.float64):
+        min_trl = min_trl[0]
+
+    return min_trl
+
+def num_independent_trials(trials_returns=None, *, m=None, p=None):
+    if m is None:
+        m = trials_returns.shape[1]
+
+    if p is None:
+        corr_matrix = trials_returns.corr()
+        p = corr_matrix.values[np.triu_indices_from(corr_matrix.values, 1)].mean()
+
+    n = p + (1 - p) * m
+
+    n = int(n) + 1  # round up
+
+    return n
+
+def expected_maximum_sr(trials_returns=None, expected_mean_sr=0.0, *, independent_trials=None, trials_sr_std=None):
+    emc = 0.5772156649  # Euler-Mascheroni constant
+
+    if independent_trials is None:
+        independent_trials = num_independent_trials(trials_returns)
+
+    if trials_sr_std is None:
+        srs = estimated_sharpe_ratio(trials_returns)
+        trials_sr_std = srs.std()
+
+    maxZ = (1 - emc) * scipy_stats.norm.ppf(1 - 1. / independent_trials) + emc * scipy_stats.norm.ppf(
+        1 - 1. / (independent_trials * np.e))
+    expected_max_sr = expected_mean_sr + (trials_sr_std * maxZ)
+
+    return expected_max_sr
