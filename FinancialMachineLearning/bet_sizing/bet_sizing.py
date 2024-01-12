@@ -6,6 +6,24 @@ from FinancialMachineLearning.bet_sizing.ef3m import M2N, raw_moment, most_likel
 from FinancialMachineLearning.multiprocess.multiprocess import mp_pandas_obj
 import warnings
 
+def de_prado_bet_size(prob_series, clip = True):
+    # Can't compute for p = 1 or p = 0, leads to inf.
+    p = prob_series.copy()
+    p[p == 1] = 0.99999
+    p[p == 0] = 0.00001
+
+    # Getting max value from training set
+    num_classes = 2
+    dp_sizes = (p - 1 / num_classes) / ((p * (1 - p)) ** 0.5)
+
+    dp_t_sizes = dp_sizes.apply(lambda s: norm.cdf(s))
+    dp_bet_sizes = dp_t_sizes
+
+    # no sigmoid function, only clipping?
+    dp_bet_sizes[dp_bet_sizes < 0.5] = 0
+
+    return dp_bet_sizes
+
 def get_signal(prob, num_classes, pred = None):
     if prob.shape[0] == 0:
         return pd.Series()

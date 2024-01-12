@@ -3,6 +3,142 @@ import pandas as pd
 from typing import Union
 from sklearn.datasets import make_classification
 import datetime
+
+class RegimeGenerator(object):
+    def __init__(self, init_ar: tuple, inner_steps: int, phi_positive: tuple, phi_negative: tuple,
+                 standard_deviation: float):
+        '''
+        generate bi-regime market time series
+        :param init_ar: tuple, set initial ar1, ar2, ar3 values
+        :param inner_steps: number of observations which is negative regime
+        :param phi_positive: coefficient of AR models in positive regime
+        :param phi_negative: coefficient of AR models in negative regime
+        :param standard_deviation: standard deviation of error term
+        '''
+        self.r1 = init_ar[0]
+        self.r2 = init_ar[1]
+        self.r3 = init_ar[2]
+        self.inner_steps = inner_steps
+        self.p1 = phi_positive[0]
+        self.p2 = phi_positive[1]
+        self.p3 = phi_positive[2]
+        self.pn1 = phi_negative[0]
+        self.pn2 = phi_negative[1]
+        self.pn3 = phi_negative[2]
+        self.stdev = standard_deviation
+        self.data = None
+
+    def _gen_data(self, phi1, phi2, phi3, flag, drift, steps):
+        r1, r2, r3 = self.r1, self.r2, self.r3  # initialization
+
+        rets, flags = [], []
+        for _ in range(0, steps):
+            a = np.random.normal(loc=0, scale=self.stdev, size=1)  # white noise component using IBM weekly std
+            rt = drift + phi1 * r1 + phi2 * r2 + phi3 * r3 + a
+            flags.append(flag)
+            rets.append(float(rt))
+
+            # Update lagged returns
+            r3, r2, r1 = r2, r1, rt
+
+        return rets, flags
+
+    def _gen_dual_regime(self, steps, inner_steps, prob_switch, stdev):
+        rets, flags = [], []
+        for _ in range(0, steps):
+
+            rand = np.random.uniform()
+            is_regime_two = rand < prob_switch
+
+            if is_regime_two:
+                # This negative regime has negative sign coefficients to the original
+                rets_regime, flags_regime = self._gen_data(phi1=self.pn1, phi2=self.pn2, phi3=self.pn3,
+                                                           flag=1, steps=inner_steps, drift=-0.0001)
+            else:
+                # Original Regime
+                rets_regime, flags_regime = self._gen_data(phi1=self.p1, phi2=self.p2, phi3=self.p3,
+                                                           flag=0, steps=inner_steps, drift=0.000)
+
+            # Add to store
+            rets.extend(rets_regime)
+            flags.extend(flags_regime)
+        return rets, flags
+
+    def single_regime(self, steps, drift):
+        # Generate returns
+        rets, _ = self._gen_data(phi1=self.p1, phi2=self.p2, phi3=self.p3, flag=0, steps=steps, drift=drift)
+
+        # Convert to DF and add dates
+        self.data = pd.DataFrame({'rets': np.array(rets).flatten()})  # initialization
+        dates = pd.date_range(
+            end=datetime.datetime.now(),
+            periods=steps,
+            freq='d',
+            normalize=True
+        )
+        self.data.index = dates
+
+        return self.data
+
+    def dual_regime(self, total_steps, prob_switch):
+        # Params
+        steps = int(total_steps / self.inner_steps)  # Set steps so that total steps is reached
+
+        # Gen dual regime data
+        rets, flags = self._gen_dual_regime(
+            steps=steps,
+            inner_steps=self.inner_steps,
+            prob_switch=prob_switch,
+            stdev=self.stdev
+        )
+        # Convert to DF
+        date_range = pd.date_range(
+            end=datetime.datetime.now(),
+            periods=steps * self.inner_steps,
+            freq='d',
+            normalize=True
+        )
+        self.data = pd.DataFrame({'rets': np.array(rets).flatten(), 'flags': flags}, index=date_range)
+
+        return self.data
+
+    def prep_data(self, with_flags: bool = True):
+
+        # Set target variable
+        self.data['target'] = self.data['rets'].apply(lambda x: 0 if x < 0 else 1).shift(-1)  # Binary classification
+
+        # Create data set
+        self.data['target_rets'] = self.data['rets'].shift(-1)  # Add target rets for debugging
+        self.data.dropna(inplace=True)
+
+        # Auto-correlation trading rule: trade sign of previous day.
+        self.data['pmodel'] = self.data['rets'].apply(lambda x: 1 if x > 0.0 else 0)
+        # primary model
+
+        # Strategy daily returns
+        self.data['prets'] = (self.data['pmodel'] * self.data['target_rets']).shift(
+            1)  # Lag by 1 to remove look ahead and align dates
+        self.data.dropna(inplace=True)
+
+        # Add lag rets 2 and 3 for Logistic regression
+        self.data['rets2'] = self.data['rets'].shift(1)
+        self.data['rets3'] = self.data['rets'].shift(2)
+
+        # Add Regime indicator if with_flags is on
+        if with_flags:
+            # Add Regime features, lagged by 5 days.
+            # We lag it to imitate the lagging nature of rolling statistics.
+            self.data['regime'] = self.data['flags'].shift(5)
+
+        # Data used to train model
+        model_data = self.data[self.data['pmodel'] == 1].copy()
+
+        # Apply labels to total data set
+        # In this setting the target for the pmodel is the meta_labels when you filter by only pmodel=1
+        model_data.dropna(inplace=True)
+
+        return model_data, self.data
+
 class GeometricBrownianMotion :
     def __init__(self, mu : Union[int, float], sigma : float, n_paths : int,
                  n_steps : int, start , end, initial_price : Union[int, float]) -> None:
