@@ -139,6 +139,23 @@ class RegimeGenerator(object):
 
         return model_data, self.data
 
+def mix_gaussians(mu1, mu2, sigma1, sigma2, prob1, nObs) :
+    '''
+    gaussian simulation
+    :param mu1: return rate of regime 1
+    :param mu2: return rate of regime 2
+    :param sigma1: market risk of regime 1
+    :param sigma2: market risk of regime 2
+    :param prob1:
+    :param nObs: number of observation
+    :return:
+    '''
+    ret1 = np.random.normal(mu1, sigma1, size = int(nObs * prob1))
+    ret2 = np.random.normal(mu2, sigma2, size = int(nObs) - ret1.shape[0])
+    ret = np.append(ret1, ret2, axis = 0)
+    np.random.shuffle(ret)
+    return ret
+
 class GeometricBrownianMotion :
     def __init__(self, mu : Union[int, float], sigma : float, n_paths : int,
                  n_steps : int, start , end, initial_price : Union[int, float]) -> None:
