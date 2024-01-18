@@ -18,12 +18,12 @@ ROC-AUC score: 74.725845%
 ```text
               precision    recall  f1-score   support
 
-           0       0.73      0.75      0.74      1244
-           1       0.79      0.77      0.78      1515
+           0       0.71      0.66      0.68       450
+           1       0.74      0.78      0.76       567
 
-    accuracy                           0.76      2759
-   macro avg       0.76      0.76      0.76      2759
-weighted avg       0.76      0.76      0.76      2759
+    accuracy                           0.73      1017
+   macro avg       0.72      0.72      0.72      1017
+weighted avg       0.73      0.73      0.73      1017
 ```
 
 ![output.png](output.png)
