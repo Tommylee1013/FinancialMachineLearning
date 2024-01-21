@@ -1,10 +1,10 @@
 import warnings
 import numpy as np
 
-from keras.layers import Layer, RNN
-from keras import backend as K, activations, initializers, regularizers, constraints
-from keras.layers.recurrent import _generate_dropout_mask
-from keras.legacy import interfaces
+from tensorflow.keras.layers import Layer, RNN
+from tensorflow.keras import backend as K, activations, initializers, regularizers, constraints
+import tensorflow as tf
+#from tensorflow.keras.legacy import interfaces
 
 class AlphaRNNCell(Layer):
     def __init__(self, units,
@@ -76,38 +76,26 @@ class AlphaRNNCell(Layer):
 
     def call(self, inputs, states, training=None):
         prev_output = states[0]
-        if 0 < self.dropout < 1 and self._dropout_mask is None:
-            self._dropout_mask = _generate_dropout_mask(
-                K.ones_like(inputs),
-                self.dropout,
-                training=training)
-        if (0 < self.recurrent_dropout < 1 and
-                self._recurrent_dropout_mask is None):
-            self._recurrent_dropout_mask = _generate_dropout_mask(
-                K.ones_like(prev_output),
-                self.recurrent_dropout,
-                training=training)
 
-        dp_mask = self._dropout_mask
-        rec_dp_mask = self._recurrent_dropout_mask
+        if 0 < self.dropout < 1:
+            inputs = tf.nn.dropout(inputs, rate=self.dropout, noise_shape=(inputs.shape[0], 1, inputs.shape[2]),
+                                   seed=None)
 
-        if dp_mask is not None:
-            h = K.dot(inputs * dp_mask, self.kernel)
-        else:
-            h = K.dot(inputs, self.kernel)
+        if 0 < self.recurrent_dropout < 1:
+            prev_output = tf.nn.dropout(prev_output, rate=self.recurrent_dropout,
+                                        noise_shape=(prev_output.shape[0], 1, prev_output.shape[2]), seed=None)
+
+        h = tf.keras.backend.dot(inputs, self.kernel)
         if self.bias is not None:
-            h = K.bias_add(h, self.bias)
+            h = tf.keras.backend.bias_add(h, self.bias)
 
-        if rec_dp_mask is not None:
-            prev_output *= rec_dp_mask
-        output = h + K.dot(prev_output, self.recurrent_kernel)
+        output = h + tf.keras.backend.dot(prev_output, self.recurrent_kernel)
         if self.activation is not None:
             output = self.activation(output)
-        output = K.sigmoid(self.alpha) * output + (1 - K.sigmoid(self.alpha)) * prev_output
-        # Properly set learning phase on output tensor.
-        if 0 < self.dropout + self.recurrent_dropout:
-            if training is None:
-                output._uses_learning_phase = True
+
+        alpha = tf.keras.backend.sigmoid(self.alpha)
+        output = alpha * output + (1 - alpha) * prev_output
+
         return output, [output]
 
     def get_config(self):
@@ -135,7 +123,6 @@ class AlphaRNNCell(Layer):
 
 
 class AlphaRNN(RNN):
-    @interfaces.legacy_recurrent_support
     def __init__(self, units,
                  activation='tanh',
                  use_bias=True,
@@ -171,22 +158,29 @@ class AlphaRNN(RNN):
             dropout = 0.
             recurrent_dropout = 0.
 
-        cell = AlphaRNN(
-            units, activation = activation,
-            use_bias = use_bias,
-            kernel_initializer = kernel_initializer,
-            recurrent_initializer = recurrent_initializer,
-            bias_initializer = bias_initializer,
-            kernel_regularizer = kernel_regularizer,
-            recurrent_regularizer = recurrent_regularizer,
-            bias_regularizer = bias_regularizer,
-            kernel_constraint = kernel_constraint,
-            recurrent_constraint = recurrent_constraint,
-            bias_constraint = bias_constraint,
-            dropout = dropout,
-            recurrent_dropout = recurrent_dropout)
-        super(AlphaRNNCell, self).__init__(cell, return_sequences = return_sequences, return_state = return_state,
-                                       go_backwards = go_backwards, stateful = stateful, unroll = unroll, **kwargs)
+        cell = AlphaRNNCell(units,
+                            activation=activation,
+                            use_bias=use_bias,
+                            kernel_initializer=kernel_initializer,
+                            recurrent_initializer=recurrent_initializer,
+                            bias_initializer=bias_initializer,
+                            kernel_regularizer=kernel_regularizer,
+                            recurrent_regularizer=recurrent_regularizer,
+                            bias_regularizer=bias_regularizer,
+                            kernel_constraint=kernel_constraint,
+                            recurrent_constraint=recurrent_constraint,
+                            bias_constraint=bias_constraint,
+                            dropout=dropout,
+                            recurrent_dropout=recurrent_dropout,
+                            **kwargs)
+
+        super(AlphaRNN, self).__init__(cell,
+                                       return_sequences=return_sequences,
+                                       return_state=return_state,
+                                       go_backwards=go_backwards,
+                                       stateful=stateful,
+                                       unroll=unroll,
+                                       **kwargs)
         self.activity_regularizer = regularizers.get(activity_regularizer)
 
     def call(self, inputs, mask = None, training = None, initial_state = None):
@@ -377,19 +371,13 @@ class AlphatRNNCell(Layer):
     def call(self, inputs, states, training=None):
         h_tm1 = states[0]  # previous memory
 
-        if 0 < self.dropout < 1 and self._dropout_mask is None:
-            self._dropout_mask = _generate_dropout_mask(
-                K.ones_like(inputs),
-                self.dropout,
-                training=training,
-                count=2)
-        if (0 < self.recurrent_dropout < 1 and
-                self._recurrent_dropout_mask is None):
-            self._recurrent_dropout_mask = _generate_dropout_mask(
-                K.ones_like(h_tm1),
-                self.recurrent_dropout,
-                training=training,
-                count=2)
+        # 입력에 대한 Dropout 적용
+        if 0 < self.dropout < 1:
+            inputs = tf.nn.dropout(inputs, rate=self.dropout, noise_shape=(inputs.shape[0], 1, inputs.shape[2]))
+
+        # 순환 연결에 대한 Dropout 적용
+        if 0 < self.recurrent_dropout < 1:
+            h_tm1 = tf.nn.dropout(h_tm1, rate=self.recurrent_dropout, noise_shape=(h_tm1.shape[0], 1, h_tm1.shape[2]))
 
         # dropout matrices for input units
         dp_mask = self._dropout_mask
@@ -491,7 +479,6 @@ class AlphatRNNCell(Layer):
 
 
 class AlphatRNN(RNN):
-    @interfaces.legacy_recurrent_support
     def __init__(self, units,
                  activation='tanh',
                  recurrent_activation='sigmoid',
@@ -528,29 +515,28 @@ class AlphatRNN(RNN):
             dropout = 0.
             recurrent_dropout = 0.
 
-        cell = AlphatRNNCell(units,
-                             activation=activation,
-                             recurrent_activation=recurrent_activation,
-                             use_bias=use_bias,
-                             kernel_initializer=kernel_initializer,
-                             recurrent_initializer=recurrent_initializer,
-                             bias_initializer=bias_initializer,
-                             kernel_regularizer=kernel_regularizer,
-                             recurrent_regularizer=recurrent_regularizer,
-                             bias_regularizer=bias_regularizer,
-                             kernel_constraint=kernel_constraint,
-                             recurrent_constraint=recurrent_constraint,
-                             bias_constraint=bias_constraint,
-                             dropout=dropout,
-                             recurrent_dropout=recurrent_dropout,
-                             implementation=implementation)
-        super(AlphatRNN, self).__init__(cell,
-                                        return_sequences=return_sequences,
-                                        return_state=return_state,
-                                        go_backwards=go_backwards,
-                                        stateful=stateful,
-                                        unroll=unroll,
-                                        **kwargs)
+        cell = AlphatRNNCell(
+            units, activation=activation, recurrent_activation=recurrent_activation,
+            use_bias=use_bias,
+            kernel_initializer=kernel_initializer,
+            recurrent_initializer=recurrent_initializer,
+            bias_initializer=bias_initializer,
+            kernel_regularizer=kernel_regularizer,
+            recurrent_regularizer=recurrent_regularizer,
+            bias_regularizer=bias_regularizer,
+            kernel_constraint=kernel_constraint,
+            recurrent_constraint=recurrent_constraint,
+            bias_constraint=bias_constraint,
+            dropout=dropout,
+            recurrent_dropout=recurrent_dropout
+        )
+        super().__init__(cell,
+                         return_sequences=return_sequences,
+                         return_state=return_state,
+                         go_backwards=go_backwards,
+                         stateful=stateful,
+                         unroll=unroll,
+                         **kwargs)
         self.activity_regularizer = regularizers.get(activity_regularizer)
 
     def call(self, inputs, mask=None, training=None, initial_state=None):
