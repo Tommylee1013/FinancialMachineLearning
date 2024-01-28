@@ -11,7 +11,7 @@ def get_values_diff(test_type, series, index, ind):
 
     return values_diff
 def get_s_n_for_t(series: pd.Series, test_type: str, molecule: list) -> pd.DataFrame:
-    s_n_t_series = pd.DataFrame(index=molecule, columns=['stat', 'critical_value'])
+    s_n_t_series = pd.DataFrame(index = molecule, columns = ['stat', 'critical_value'])
     for index in molecule:
 
         series_t = series.loc[:index]
@@ -36,10 +36,11 @@ def get_s_n_for_t(series: pd.Series, test_type: str, molecule: list) -> pd.DataF
 def get_chu_stinchcombe_white_statistics(series: pd.Series, test_type: str = 'one_sided',
                                          num_threads: int = 8) -> pd.Series:
     molecule = series.index[2:series.shape[0]]
-    s_n_t_series = mp_pandas_obj(func=get_s_n_for_t,
-                                 pd_obj=('molecule', molecule),
-                                 series=series,
-                                 test_type=test_type,
-                                 num_threads=num_threads,
-                                 )
+    s_n_t_series = mp_pandas_obj(
+        func = get_s_n_for_t,
+        pd_obj = ('molecule', molecule),
+        series = series,
+        test_type = test_type,
+        num_threads = num_threads,
+    )
     return s_n_t_series

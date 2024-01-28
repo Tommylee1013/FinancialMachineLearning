@@ -108,11 +108,12 @@ def get_sadf(series: pd.Series, model: str, lags: Union[int, list], min_length: 
     X, y = set_sadf_data(series, model, lags, add_const)
     molecule = y.index[min_length:y.shape[0]]
 
-    sadf_series = mp_pandas_obj(func=sadf_outer_loop,
-                                pd_obj=('molecule', molecule),
-                                X=X,
-                                y=y,
-                                min_length=min_length,
-                                num_threads=num_threads,
-                                )
+    sadf_series = mp_pandas_obj(
+        func = sadf_outer_loop,
+        pd_obj = ('molecule', molecule),
+        X = X,
+        y = y,
+        min_length = min_length,
+        num_threads = num_threads,
+    )
     return sadf_series
