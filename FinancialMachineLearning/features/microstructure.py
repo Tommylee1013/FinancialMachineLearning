@@ -10,7 +10,7 @@ def tick_rule(tick_prices : pd.Series):
     aggressor.iloc[0] = 1.
     aggressor[price_change < 0] = -1.
     aggressor[price_change > 0] = 1.
-    aggressor = aggressor.fillna(method='ffill')
+    aggressor = aggressor.ffill()
     return aggressor
 def volume_weighted_average_price(dollar_volume: list, volume: list) -> float:
     return sum(dollar_volume) / sum(volume)
