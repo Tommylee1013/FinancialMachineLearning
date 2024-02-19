@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from scipy.optimize import minimize
 from sklearn.linear_model import LinearRegression
 from abc import ABC, abstractmethod
 from collections import namedtuple
@@ -35,6 +36,28 @@ def roll_measure(close_prices: pd.Series, window: int = 20) -> pd.Series:
 def roll_impact(close_prices: pd.Series, dollar_volume: pd.Series, window: int = 20) -> pd.Series:
     roll_measure_ = roll_measure(close_prices, window)
     return roll_measure_ / dollar_volume
+
+class MarketDepth:
+    def __init__(self, data: pd.DataFrame) -> None:
+        self.data = data
+        self.market_depth = pd.Series(dtype=float)
+
+    def fit(self, bid_sign, ask_sign, interval) -> pd.DataFrame:
+        bid_depth = self.data[self.data['side'] == bid_sign]['Volume'].resample(interval).sum()
+        ask_depth = self.data[self.data['side'] == ask_sign]['Volume'].resample(interval).sum()
+        market_depth = pd.DataFrame(
+            {'bid_depth': bid_depth, 'ask_depth': ask_depth},
+            index=self.data.resample(interval).index
+        )
+        self.market_depth = market_depth
+        return self.market_depth
+
+    def fit_daily_data(self, bid_column: str = 'Low', ask_column: str = 'High') -> pd.Series:
+        spread = self.data[ask_column] - self.data[bid_column]
+        market_depth = self.data['Volume'] / spread
+        market_depth.name = 'market_depth'
+        self.market_depth = market_depth
+        return self.market_depth
 
 class CorwinSchultz :
     def __init__(self, high : pd.Series, low : pd.Series) -> None:
@@ -393,3 +416,48 @@ def vpin_volume_bars(file_path, threshold=28224, batch_size=20000000, verbose=Tr
                      threshold=threshold, batch_size=batch_size, additional_features = additional_features)
     volume_bars = bars.batch_run(verbose=verbose, to_csv=to_csv, output_path = output_path)
     return volume_bars
+
+def pin_likelihood(params, buy_orders, sell_orders):
+    alpha, delta, mu, epsilon_b, epsilon_s = params
+    # alpha : a ratio of new information arrived at market
+    # delta : a conditional bid probability of informed trader
+
+    lambda_b = alpha + epsilon_b
+    lambda_s = (1 - alpha) + epsilon_s
+    lambda_0 = mu * (epsilon_b + epsilon_s)
+
+    lambda_total = lambda_b + lambda_s + lambda_0
+    pi_buy = lambda_b / lambda_total
+    pi_sell = lambda_s / lambda_total
+
+    likelihood = np.sum(buy_orders * np.log(pi_buy) + sell_orders * np.log(pi_sell))
+    return -likelihood
+
+def estimate_pin(buy_orders, sell_orders, alpha=0.05, delta=0.5, mu=0.5, bid=0.5, ask=0.5):
+    initial_guess = [alpha, delta, mu, bid, ask]
+    bounds = [(0, 1), (0, 1), (0, None), (0, None), (0, None)]
+    result = minimize(pin_likelihood, initial_guess, args=(buy_orders, sell_orders), bounds=bounds)
+
+    if result.success:
+        alpha, delta, mu, epsilon_b, epsilon_s = result.x
+        pin = (alpha * delta) / (alpha * delta + (1 - alpha) * (1 - delta))
+        return pin
+    else:
+        raise ValueError("PIN estimation error")
+
+def probability_of_informed_trading(buy_orders, sell_orders, alpha=0.05, delta=0.5, mu=0.5, bid=0.5, ask=0.5,
+                                    window=21):
+    n = len(buy_orders)
+    pins = []
+    for start in range(0, n - window + 1):
+        end = start + window
+        window_buy_orders = buy_orders[start:end]
+        window_sell_orders = sell_orders[start:end]
+        pin = estimate_pin(window_buy_orders, window_sell_orders, alpha, delta, mu, bid, ask)
+        pins.append(pin)
+    pins = pd.Series(
+        pins,
+        index=buy_orders.index[window - 1:],
+        name='pin'
+    )
+    return pins
