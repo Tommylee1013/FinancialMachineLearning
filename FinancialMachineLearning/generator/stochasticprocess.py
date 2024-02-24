@@ -3,6 +3,160 @@ import pandas as pd
 from typing import Union
 from sklearn.datasets import make_classification
 import datetime
+import scipy.stats as ss
+
+class MonteCarloSimulation:
+    def __init__(self, interest_rate: float, initial_price: float, maturity: float, sigma: float,
+                 dividend_yield: float, nObs: int, slices: int, random_state: bool or int = False):
+        self.S0 = float(initial_price)
+        self.T = float(maturity)
+        self.dividend_yield = float(dividend_yield)
+        self.slices = int(slices)
+        self.nObs = int(nObs)
+        self.dt = self.T / self.slices
+        self.mu = interest_rate
+        self.r = np.full((self.nObs, self.slices), interest_rate * self.dt)
+        self.discount_table = np.exp(np.cumsum(-self.r, axis=1))
+        self.sigma = np.full((self.nObs, self.slices), sigma)
+        self.terminal_prices = []
+        self.z_t = np.random.standard_normal((self.nObs, self.slices))
+
+        if type(random_state) is bool:
+            if random_state: np.random.seed(0)
+        elif type(random_state) is int:
+            np.random.seed(random_state)
+
+    def vasicek_model(self, kappa: float, theta: float, sigma_r: float) -> np.ndarray:
+        interest_z_t = np.random.standard_normal((self.nObs, self.slices))
+        interest_array = np.full(
+            (self.nObs, self.slices), self.r[0, 0] * self.dt
+        )
+
+        for i in range(1, self.slices):
+            interest_array[:, i] = theta + np.exp(- kappa / self.slices) * (interest_array[:, i - 1] - theta) + np.sqrt(
+                sigma_r ** 2 / (2 * kappa) * (1 - np.exp(-2 * kappa / self.slices))
+            ) * interest_z_t[:, i]
+
+        self.r = interest_array
+        return self.r
+
+    def cox_ingersoll_ross_model(self, kappa: float, theta: float, sigma_r: float) -> np.ndarray:
+        if 2 * kappa * theta > sigma_r ** 2:
+            raise ValueError(
+                "Simulation Error. to ensure the interest rate positive, you need to set environment to '2 * kappa * theta < sigma ** 2'.")
+        interest_array = np.full(
+            (self.nObs, self.slices), self.r[0, 0] * self.dt
+        )
+        df = 4 * theta * kappa / sigma_r ** 2
+
+        for i in range(1, self.slices):
+            _lambda = (4 * kappa * np.exp(-kappa / self.slices) * interest_array[:, i - 1] / (
+                    sigma_r ** 2 * (1 - np.exp(- kappa / self.slices))))
+            _chi_square_factor = np.random.noncentral_chisquare(
+                df=df, nonc=_lambda, size=self.nObs
+            )
+            interest_array[:, i] = sigma_r ** 2 * (1 - np.exp(-kappa / self.slices)) / (4 * kappa) * _chi_square_factor
+
+        self.r = interest_array
+        return self.r
+
+    def heston_model(self, kappa: float, theta: float, sigma_v: float, rho: float = 0.0) -> np.ndarray:
+        variance_v = sigma_v ** 2
+        if 2 * kappa * theta > variance_v:
+            raise ValueError(
+                "Simulation Error. to ensure the interest rate positive, you need to set environment to '2 * kappa * theta < sigma_v ** 2'.")
+
+        mu = np.array([0, 0])
+        cov = np.array([[1, rho], [rho, 1]])
+
+        zt = ss.multivariate_normal.rvs(
+            mean=mu, cov=cov, size=(self.nObs, self.slices))
+        variance_array = np.full(
+            (self.nObs, self.slices), self.sigma[0, 0] ** 2
+        )
+        self.z_t = zt[:, :, 0]
+        zt_v = zt[:, :, 1]
+
+        for i in range(1, self.slices):
+            previous_slice_variance = np.maximum(variance_array[:, i - 1], 0)
+            drift = kappa * (theta - previous_slice_variance) * self.dt
+            diffusion = sigma_v * np.sqrt(previous_slice_variance) * zt_v[:, i - 1] * np.sqrt(self.dt)
+            delta_vt = drift + diffusion
+            variance_array[:, i] = variance_array[:, i - 1] + delta_vt
+
+        self.sigma = np.sqrt(np.maximum(variance_array, 0))
+        return self.sigma
+
+    def geometric_brownian_motion(self) -> np.ndarray:
+        self.exp_mean = (self.mu - self.dividend_yield - (self.sigma ** 2.0) * 0.5) * self.dt
+        self.exp_diffusion = self.sigma * np.sqrt(self.dt)
+
+        self.price_array = np.zeros((self.nObs, self.slices))
+        self.price_array[:, 0] = self.S0
+
+        for i in range(1, self.slices):
+            self.price_array[:, i] = self.price_array[:, i - 1] * np.exp(
+                self.exp_mean[:, i - 1] + self.exp_diffusion[:, i - 1] * self.z_t[:, i - 1]
+            )
+
+        self.terminal_prices = self.price_array[:, -1]
+        self.stock_price_expectation = np.average(self.terminal_prices)
+
+        result = (self.price_array - self.price_array.mean()).cumsum(axis = 0)
+        result = result + self.S0
+
+        return result
+
+    def ornstein_uhlenbeck(self, kappa: float, theta: float) -> np.ndarray:
+        self.price_array = np.zeros((self.nObs, self.slices))
+        self.price_array[:, 0] = self.S0
+        sigma = self.sigma[0, 0]
+
+        for i in range(1, self.slices):
+            dX = kappa * (theta - self.price_array[:, i - 1]) * self.dt + sigma * np.sqrt(self.dt) * self.z_t[:, i - 1]
+            self.price_array[:, i] = self.price_array[:, i - 1] + dX
+
+        self.terminal_prices = self.price_array[:, -1]
+        self.process_expectation = np.average(self.terminal_prices)
+
+        result = (self.price_array - self.price_array.mean()).cumsum(axis=0)
+        result = result + self.S0
+
+        return result
+
+    def jump_diffusion_model(self, jump_alpha: float, jump_std: float, poisson_lambda: float) -> np.ndarray:
+        self.z_t_stock = np.random.standard_normal((self.nObs, self.slices))
+        self.price_array = np.zeros((self.nObs, self.slices))
+        self.price_array[:, 0] = self.S0
+
+        self.k = np.exp(jump_alpha) - 1
+
+        self.exp_mean = (self.mu - self.dividend_yield - poisson_lambda * self.k - (self.sigma ** 2.0) * 0.5) * self.dt
+        self.exp_diffusion = self.sigma * np.sqrt(self.dt)
+
+        for i in range(1, self.slices):
+            self.sum_w = []
+            self.m = np.random.poisson(lam=poisson_lambda, size=self.nObs)
+
+            for j in self.m:
+                self.sum_w.append(np.sum(np.random.standard_normal(j)))
+
+            self.poisson_jump_factor = np.exp(
+                self.m * (jump_alpha - 0.5 * jump_std ** 2) + jump_std * np.array(self.sum_w)
+            )
+
+            self.price_array[:, i] = self.price_array[:, i - 1] * np.exp(
+                self.exp_mean[:, i] + self.exp_diffusion[:, i]
+                * self.z_t_stock[:, i]
+            ) * self.poisson_jump_factor
+
+        self.terminal_prices = self.price_array[:, -1]
+        self.stock_price_expectation = np.average(self.terminal_prices)
+
+        result = (self.price_array - self.price_array.mean()).cumsum(axis=0)
+        result = result + self.S0
+
+        return result
 
 class RegimeGenerator(object):
     def __init__(self, init_ar: tuple, inner_steps: int, phi_positive: tuple, phi_negative: tuple,
@@ -156,82 +310,6 @@ def mix_gaussians(mu1, mu2, sigma1, sigma2, prob1, nObs) :
     np.random.shuffle(ret)
     return ret
 
-class GeometricBrownianMotion :
-    def __init__(self, mu : Union[int, float], sigma : float, n_paths : int,
-                 n_steps : int, start , end, initial_price : Union[int, float]) -> None:
-        self.mu = mu
-        self.sigma = sigma
-        self.n_paths = n_paths
-        self.n_steps = n_steps
-        self.t = start
-        self.T = end
-        self.S_0 = initial_price
-
-    def get_paths(self):
-        dt = self.T / self.n_steps
-        dW = np.sqrt(dt) * np.random.randn(self.n_paths, self.n_steps)
-        dS = (self.mu - 0.5 * self.sigma ** 2) * dt + self.sigma * dW
-
-        dS = np.insert(dS, 0, 0, axis=1)
-        S = np.cumsum(dS, axis=1)
-
-        S = self.S_0 * np.exp(S)
-        return S
-
-    def mean(self) -> float:
-        mean = self.S_0 * np.exp(self.mu * self.t)
-        return mean
-
-    def var(self) -> float:
-        variance = (self.S_0 ** 2) * np.exp(2 * self.mu * self.t) * (np.exp(self.t * self.sigma ** 2) - 1)
-        return variance
-
-    def simulate(self) -> pd.DataFrame:
-        start = datetime.datetime.today()
-        end = start + pd.offsets.BDay(self.n_steps+1)
-        df0 = pd.date_range(start=start, end=end, freq='B')
-        simulation = pd.DataFrame(self.get_paths().transpose(), index = df0)
-        return simulation
-
-
-class OrnsteinUhlenbeckProcess:
-    def __init__(self, alpha, mu, sigma, n_paths : int, n_steps : int,
-                 start, end, initial_price : Union[int, float]) -> None:
-        self.alpha = alpha
-        self.mu = mu
-        self.sigma = sigma
-        self.n_paths = n_paths
-        self.n_steps = n_steps
-        self.t = start
-        self.T = end
-        self.S_0 = initial_price
-    def get_paths(self, analytic_EM : bool = False):
-        dt = self.T / self.n_steps
-        N = np.random.randn(self.n_steps, self.n_paths)
-        S = np.concatenate((self.S_0 * np.ones((1, self.n_paths)), np.zeros((self.n_steps, self.n_paths))), axis=0)
-
-        if analytic_EM == True:
-            sdev = self.sigma * np.sqrt((1 - np.exp(-2 * self.alpha * dt)) / (2 * self.alpha))
-            for i in range(0, self.n_steps):
-                S[i + 1, :] = self.mu + (S[i, :] - self.mu) * np.exp(-self.alpha * dt) + sdev * N[i, :]
-        else:
-            sdev = self.sigma * np.sqrt(dt)
-            for i in range(0, self.n_steps):
-                S[i + 1, :] = S[i, :] + self.alpha * (self.mu - S[i, :]) * dt + sdev * N[i, :]
-        return S
-    def mean(self) -> float:
-        mean = self.mu + (self.S_0 - self.mu) * np.exp(-self.alpha * self.t)
-        return mean
-    def var(self) -> float:
-        variance = (1 - np.exp(-2 * self.alpha * self.t)) * (self.sigma ** 2) / (2 * self.alpha)
-        return variance
-    def simulate(self, analytic_EM = False) -> pd.DataFrame:
-        start = datetime.datetime.today()
-        end = start + pd.offsets.BDay(self.n_steps+1)
-        df0 = pd.date_range(start=start, end=end, freq='B')
-        simulation = pd.DataFrame(self.get_paths(analytic_EM), index = df0)
-        return simulation
-
 class AutoRegressiveProcess:
     def __init__(self, p : int, n_paths : int ,
                  n_steps : int, start : int,
@@ -273,81 +351,3 @@ class AutoRegressiveProcess:
         simulation = pd.DataFrame(data, columns = [f'Path_{i}' for i in range(self.n_paths)], index = df0)
 
         return simulation
-
-class JumpDiffusionProcess :
-    def __init__(self, mu : Union[int, float], sigma : float, lambdaN : float, eta1 : float, eta2 : float, p : float,
-                 n_paths : int, n_steps : int, start, end, initial_price : Union[int, float]) -> None:
-        self.mu = mu
-        self.sigma = sigma
-        self.lambdaN = lambdaN
-        self.eta1 = eta1
-        self.eta2 = eta2
-        self.p = p
-        self.n_paths = n_paths
-        self.n_steps = n_steps
-        self.t = start
-        self.T = end
-        self.S_0 = initial_price
-
-    def get_paths(self):
-        dt = self.T / self.n_steps
-        dX = (self.mu - 0.5 * self.sigma ** 2) * dt + self.sigma * np.sqrt(dt) * np.random.randn(self.n_steps,
-                                                                                                 self.n_paths)
-        dP = np.random.poisson(self.lambdaN * dt, (self.n_steps, self.n_paths))
-        U = np.random.uniform(0, 1, (self.n_steps, self.n_paths))
-        Z = np.zeros((self.n_steps, self.n_paths))
-        for i in range(0, len(U[0])):
-            for j in range(0, len(U)):
-                if U[j, i] >= self.p:
-                    Z[j, i] = (-1 / self.eta1) * np.log((1 - U[j, i]) / self.p)
-                elif U[j, i] < self.p:
-                    Z[j, i] = (1 / self.eta2) * np.log(U[j, i] / (1 - self.p))
-
-        dJ = (np.exp(Z) - 1) * dP
-        dS = dX + dJ
-
-        dS = np.insert(dS, 0, self.S_0, axis=0)
-        S = np.cumsum(dS, axis=0)
-        return S
-
-    def mean(self) -> float:
-        mean = (self.mu + self.lambdaN * (self.p / self.eta1 - (1 - self.p) / self.eta2)) * self.t + self.S_0
-        return mean
-
-    def var(self) -> float:
-        variance = (self.sigma ** 2 + 2 * self.lambdaN * (self.p / (self.eta1 ** 2) + (1 - self.p) / (self.eta2 ** 2))) * self.t
-        return variance
-
-    def simulate(self) -> pd.DataFrame:
-        start = datetime.datetime.today()
-        end = start + pd.offsets.BDay(self.n_steps+1)
-        df0 = pd.date_range(start=start, end=end, freq='B')
-        simulation = pd.DataFrame(self.get_paths(), index = df0)
-        return simulation
-
-class PradoSyntheticProcess :
-    def __init__(self, n_features : int, n_informative : int, n_redundant : int, n_samples : int = 1000) -> None:
-        self.n_features = n_features
-        self.n_informative = n_informative
-        self.n_redundant = n_redundant
-        self.n_samples = n_samples
-    def simulate(self):
-        trnsX, _ = make_classification(n_samples = self.n_samples,
-                                       n_features = self.n_features,
-                                       n_informative = self.n_informative,
-                                       n_redundant = self.n_redundant,
-                                       shuffle = False)
-        start = datetime.datetime.today()
-        end = start + pd.offsets.BDay(self.n_samples)
-        df0 = pd.date_range(start=start, end=end, freq='B')
-        trnsX = pd.DataFrame(trnsX, index=df0)
-        trnsX = trnsX / 100
-        return trnsX
-    def mean(self) :
-        return self.simulate().mean().mean()
-    def var(self) :
-        return self.simulate().var().mean()
-    def skew(self) :
-        return self.simulate().skew().mean()
-    def kurt(self) :
-        return  self.simulate().kurt().mean()
