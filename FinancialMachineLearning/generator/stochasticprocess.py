@@ -7,156 +7,88 @@ import scipy.stats as ss
 
 class MonteCarloSimulation:
     def __init__(self, interest_rate: float, initial_price: float, maturity: float, sigma: float,
-                 dividend_yield: float, nObs: int, slices: int, random_state: bool or int = False):
-        self.S0 = float(initial_price)
-        self.T = float(maturity)
-        self.dividend_yield = float(dividend_yield)
-        self.slices = int(slices)
-        self.nObs = int(nObs)
+                 dividend_yield: float, nObs: int, slices: int, random_state: Union[bool, int] = False):
+        np.random.seed(random_state if isinstance(random_state, int) else None)
+        self.S0 = initial_price
+        self.T = maturity
+        self.dividend_yield = dividend_yield
+        self.nObs = nObs
+        self.slices = slices
         self.dt = self.T / self.slices
         self.mu = interest_rate
-        self.r = np.full((self.nObs, self.slices), interest_rate * self.dt)
-        self.discount_table = np.exp(np.cumsum(-self.r, axis=1))
-        self.sigma = np.full((self.nObs, self.slices), sigma)
-        self.terminal_prices = []
-        self.z_t = np.random.standard_normal((self.nObs, self.slices))
+        self.sigma = sigma
+        self.paths = np.zeros((nObs, slices + 1))
+        self.paths[:, 0] = self.S0
 
-        if type(random_state) is bool:
-            if random_state: np.random.seed(0)
-        elif type(random_state) is int:
-            np.random.seed(random_state)
+    def _generate_standard_normal_random_variables(self, correlation_matrix=None):
+        if correlation_matrix is None:
+            z = np.random.standard_normal((self.nObs, self.slices))
+        else:
+            z = np.random.multivariate_normal(np.zeros(2), correlation_matrix, (self.nObs, self.slices))
+        return z
 
-    def vasicek_model(self, kappa: float, theta: float, sigma_r: float) -> np.ndarray:
-        interest_z_t = np.random.standard_normal((self.nObs, self.slices))
-        interest_array = np.full(
-            (self.nObs, self.slices), self.r[0, 0] * self.dt
-        )
+    def geometric_brownian_motion(self):
+        z = self._generate_standard_normal_random_variables()
+        drift = (self.mu - self.dividend_yield - 0.5 * self.sigma ** 2) * self.dt
+        diffusion = self.sigma * np.sqrt(self.dt) * z
+        self.paths[:, 1:] = self.S0 * np.exp(np.cumsum(drift + diffusion, axis=1))
+        return self.paths
 
-        for i in range(1, self.slices):
-            interest_array[:, i] = theta + np.exp(- kappa / self.slices) * (interest_array[:, i - 1] - theta) + np.sqrt(
-                sigma_r ** 2 / (2 * kappa) * (1 - np.exp(-2 * kappa / self.slices))
-            ) * interest_z_t[:, i]
+    def vasicek_model(self, kappa: float, theta: float, sigma_r: float):
+        r = np.zeros((self.nObs, self.slices + 1))
+        r[:, 0] = self.mu
+        z = self._generate_standard_normal_random_variables()
+        for t in range(1, self.slices + 1):
+            dr = kappa * (theta - r[:, t-1]) * self.dt + sigma_r * z[:, t-1] * np.sqrt(self.dt)
+            r[:, t] = r[:, t-1] + dr
+        return r
 
-        self.r = interest_array
-        return self.r
+    def cox_ingersoll_ross_model(self, kappa: float, theta: float, sigma_r: float):
+        if not 2 * kappa * theta > sigma_r ** 2:
+            raise ValueError("2 * kappa * theta must be greater than sigma_r ** 2 for CIR model.")
+        r = np.zeros((self.nObs, self.slices + 1))
+        r[:, 0] = self.mu
+        z = self._generate_standard_normal_random_variables()
+        for t in range(1, self.slices + 1):
+            dr = kappa * (theta - r[:, t-1]) * self.dt + sigma_r * np.sqrt(r[:, t-1]) * z[:, t-1] * np.sqrt(self.dt)
+            r[:, t] = np.maximum(r[:, t-1] + dr, 0)  # Ensure non-negative rates
+        return r
 
-    def cox_ingersoll_ross_model(self, kappa: float, theta: float, sigma_r: float) -> np.ndarray:
-        if 2 * kappa * theta > sigma_r ** 2:
-            raise ValueError(
-                "Simulation Error. to ensure the interest rate positive, you need to set environment to '2 * kappa * theta < sigma ** 2'.")
-        interest_array = np.full(
-            (self.nObs, self.slices), self.r[0, 0] * self.dt
-        )
-        df = 4 * theta * kappa / sigma_r ** 2
+    def heston_model(self, kappa: float, theta: float, sigma_v: float, rho: float = 0.0):
+        correlation_matrix = np.array([[1, rho], [rho, 1]])
+        z = self._generate_standard_normal_random_variables(correlation_matrix)
+        s = np.zeros((self.nObs, self.slices + 1))
+        v = np.zeros((self.nObs, self.slices + 1))
+        s[:, 0] = self.S0
+        v[:, 0] = self.sigma ** 2
+        for t in range(1, self.slices + 1):
+            dv = kappa * (theta - v[:, t-1]) * self.dt + sigma_v * np.sqrt(v[:, t-1]) * z[:, t-1, 1] * np.sqrt(self.dt)
+            ds = s[:, t-1] * (self.mu * self.dt + np.sqrt(np.maximum(v[:, t-1], 0)) * z[:, t-1, 0] * np.sqrt(self.dt))
+            v[:, t] = np.maximum(v[:, t-1] + dv, 0)  # Ensure non-negative variance
+            s[:, t] = s[:, t-1] + ds
+        return s
 
-        for i in range(1, self.slices):
-            _lambda = (4 * kappa * np.exp(-kappa / self.slices) * interest_array[:, i - 1] / (
-                    sigma_r ** 2 * (1 - np.exp(- kappa / self.slices))))
-            _chi_square_factor = np.random.noncentral_chisquare(
-                df=df, nonc=_lambda, size=self.nObs
-            )
-            interest_array[:, i] = sigma_r ** 2 * (1 - np.exp(-kappa / self.slices)) / (4 * kappa) * _chi_square_factor
+    def ornstein_uhlenbeck(self, kappa: float, theta: float, sigma: float):
+        ou_paths = np.zeros((self.nObs, self.slices + 1))
+        ou_paths[:, 0] = self.S0
+        z = self._generate_standard_normal_random_variables()
+        for t in range(1, self.slices + 1):
+            ou_paths[:, t] = ou_paths[:, t - 1] + kappa * (theta - ou_paths[:, t - 1]) * self.dt + sigma * z[:,
+                                                                                                           t - 1] * np.sqrt(
+                self.dt)
+        return ou_paths
 
-        self.r = interest_array
-        return self.r
-
-    def heston_model(self, kappa: float, theta: float, sigma_v: float, rho: float = 0.0) -> np.ndarray:
-        variance_v = sigma_v ** 2
-        if 2 * kappa * theta > variance_v:
-            raise ValueError(
-                "Simulation Error. to ensure the interest rate positive, you need to set environment to '2 * kappa * theta < sigma_v ** 2'.")
-
-        mu = np.array([0, 0])
-        cov = np.array([[1, rho], [rho, 1]])
-
-        zt = ss.multivariate_normal.rvs(
-            mean=mu, cov=cov, size=(self.nObs, self.slices))
-        variance_array = np.full(
-            (self.nObs, self.slices), self.sigma[0, 0] ** 2
-        )
-        self.z_t = zt[:, :, 0]
-        zt_v = zt[:, :, 1]
-
-        for i in range(1, self.slices):
-            previous_slice_variance = np.maximum(variance_array[:, i - 1], 0)
-            drift = kappa * (theta - previous_slice_variance) * self.dt
-            diffusion = sigma_v * np.sqrt(previous_slice_variance) * zt_v[:, i - 1] * np.sqrt(self.dt)
-            delta_vt = drift + diffusion
-            variance_array[:, i] = variance_array[:, i - 1] + delta_vt
-
-        self.sigma = np.sqrt(np.maximum(variance_array, 0))
-        return self.sigma
-
-    def geometric_brownian_motion(self) -> np.ndarray:
-        self.exp_mean = (self.mu - self.dividend_yield - (self.sigma ** 2.0) * 0.5) * self.dt
-        self.exp_diffusion = self.sigma * np.sqrt(self.dt)
-
-        self.price_array = np.zeros((self.nObs, self.slices))
-        self.price_array[:, 0] = self.S0
-
-        for i in range(1, self.slices):
-            self.price_array[:, i] = self.price_array[:, i - 1] * np.exp(
-                self.exp_mean[:, i - 1] + self.exp_diffusion[:, i - 1] * self.z_t[:, i - 1]
-            )
-
-        self.terminal_prices = self.price_array[:, -1]
-        self.stock_price_expectation = np.average(self.terminal_prices)
-
-        result = (self.price_array - self.price_array.mean()).cumsum(axis = 0)
-        result = result + self.S0
-
-        return result
-
-    def ornstein_uhlenbeck(self, kappa: float, theta: float) -> np.ndarray:
-        self.price_array = np.zeros((self.nObs, self.slices))
-        self.price_array[:, 0] = self.S0
-        sigma = self.sigma[0, 0]
-
-        for i in range(1, self.slices):
-            dX = kappa * (theta - self.price_array[:, i - 1]) * self.dt + sigma * np.sqrt(self.dt) * self.z_t[:, i - 1]
-            self.price_array[:, i] = self.price_array[:, i - 1] + dX
-
-        self.terminal_prices = self.price_array[:, -1]
-        self.process_expectation = np.average(self.terminal_prices)
-
-        result = (self.price_array - self.price_array.mean()).cumsum(axis=0)
-        result = result + self.S0
-
-        return result
-
-    def jump_diffusion_model(self, jump_alpha: float, jump_std: float, poisson_lambda: float) -> np.ndarray:
-        self.z_t_stock = np.random.standard_normal((self.nObs, self.slices))
-        self.price_array = np.zeros((self.nObs, self.slices))
-        self.price_array[:, 0] = self.S0
-
-        self.k = np.exp(jump_alpha) - 1
-
-        self.exp_mean = (self.mu - self.dividend_yield - poisson_lambda * self.k - (self.sigma ** 2.0) * 0.5) * self.dt
-        self.exp_diffusion = self.sigma * np.sqrt(self.dt)
-
-        for i in range(1, self.slices):
-            self.sum_w = []
-            self.m = np.random.poisson(lam=poisson_lambda, size=self.nObs)
-
-            for j in self.m:
-                self.sum_w.append(np.sum(np.random.standard_normal(j)))
-
-            self.poisson_jump_factor = np.exp(
-                self.m * (jump_alpha - 0.5 * jump_std ** 2) + jump_std * np.array(self.sum_w)
-            )
-
-            self.price_array[:, i] = self.price_array[:, i - 1] * np.exp(
-                self.exp_mean[:, i] + self.exp_diffusion[:, i]
-                * self.z_t_stock[:, i]
-            ) * self.poisson_jump_factor
-
-        self.terminal_prices = self.price_array[:, -1]
-        self.stock_price_expectation = np.average(self.terminal_prices)
-
-        result = (self.price_array - self.price_array.mean()).cumsum(axis=0)
-        result = result + self.S0
-
-        return result
+    def jump_diffusion_model(self, jump_intensity: float, jump_mean: float, jump_std: float):
+        jd_paths = np.zeros((self.nObs, self.slices + 1))
+        jd_paths[:, 0] = self.S0
+        z = self._generate_standard_normal_random_variables()
+        jumps = np.random.poisson(lam=jump_intensity * self.dt, size=(self.nObs, self.slices))
+        for t in range(1, self.slices + 1):
+            jump_sizes = np.random.normal(loc=jump_mean, scale=jump_std, size=(self.nObs, jumps[:, t - 1].max()))
+            total_jump = np.array([jump_sizes[i, :jumps[i, t - 1]].sum() for i in range(self.nObs)])
+            jd_paths[:, t] = jd_paths[:, t - 1] * np.exp(
+                (self.mu - 0.5 * self.sigma ** 2) * self.dt + self.sigma * z[:, t - 1] * np.sqrt(self.dt)) + total_jump
+        return jd_paths
 
 class RegimeGenerator(object):
     def __init__(self, init_ar: tuple, inner_steps: int, phi_positive: tuple, phi_negative: tuple,
