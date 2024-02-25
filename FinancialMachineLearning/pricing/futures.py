@@ -5,7 +5,6 @@ class FutureForwardPricing:
         self.interest_rate = interest_rate
         self.dividend_yield = dividend_yield
         self.maturity = maturity
-
     def futures(self):
         """
         Calculate the future price as the average of the simulated stock prices at maturity.
@@ -13,7 +12,6 @@ class FutureForwardPricing:
         future_prices = self.stock_paths[:, -1]  # Prices at maturity
         future_price = np.mean(future_prices)
         return future_price
-
     def forwards(self):
         """
         Calculate the forward price using the formula: S0 * exp((r - q) * T),
