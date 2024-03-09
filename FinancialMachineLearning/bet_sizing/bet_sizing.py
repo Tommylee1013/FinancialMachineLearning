@@ -3,7 +3,7 @@ import pandas as pd
 from scipy.stats import norm, moment
 
 from FinancialMachineLearning.bet_sizing.ef3m import M2N, raw_moment, most_likely_parameters
-from FinancialMachineLearning.multiprocess.multiprocess import mp_pandas_obj
+from FinancialMachineLearning.utils.multiprocess import mp_pandas_obj
 import warnings
 
 def de_prado_bet_size(prob_series, clip = True):

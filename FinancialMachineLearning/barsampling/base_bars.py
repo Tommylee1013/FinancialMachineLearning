@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Tuple, Union, Generator, Iterable, Optional
 import numpy as np
 import pandas as pd
-from FinancialMachineLearning.multiprocess.fast_ewma import ewma
+from FinancialMachineLearning.utils.fast_ewma import ewma
 
 def _crop_data_frame_in_batches(df: pd.DataFrame, chunksize: int) -> list:
     generator_object = []

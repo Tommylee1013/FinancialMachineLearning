@@ -3,6 +3,7 @@ import numpy as np
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_samples, silhouette_score
 from FinancialMachineLearning.filter.denoising import *
+from FinancialMachineLearning.utils.stats import optimizing_portfolio
 
 def clusterKMeansBase(
         corr0, maxNumClusters=10, n_init=10, verbose=False

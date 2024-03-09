@@ -2,7 +2,7 @@ from typing import Union, Iterable, List, Optional
 import numpy as np
 import pandas as pd
 from FinancialMachineLearning.barsampling.base_bars import BaseImbalanceBars
-from FinancialMachineLearning.multiprocess.fast_ewma import ewma
+from FinancialMachineLearning.utils.fast_ewma import ewma
 class EMAImbalanceBars(BaseImbalanceBars):
     def __init__(self, metric: str,
                  num_prev_bars: int,

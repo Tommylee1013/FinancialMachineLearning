@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from FinancialMachineLearning.multiprocess.multiprocess import mp_pandas_obj
+from FinancialMachineLearning.utils.multiprocess import mp_pandas_obj
 def get_values_diff(test_type, series, index, ind):
     if test_type == 'one_sided':
         values_diff = series.loc[index] - series.loc[ind]

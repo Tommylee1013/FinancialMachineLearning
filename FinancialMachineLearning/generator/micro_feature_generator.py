@@ -4,7 +4,7 @@ from FinancialMachineLearning.features.entropy import shannon_entropy, plug_in_e
 from FinancialMachineLearning.features.encoding import encode_array
 from FinancialMachineLearning.features.microstructure import trades_based_kyle_lambda, trades_based_amihud_lambda, trades_based_hasbrouck_lambda, get_avg_tick_size, volume_weighted_average_price
 from FinancialMachineLearning.features.encoding import encode_tick_rule_array
-from FinancialMachineLearning.multiprocess.misc import crop_data_frame_in_batches
+from FinancialMachineLearning.utils.misc import crop_data_frame_in_batches
 
 class MicrostructuralFeaturesGenerator:
     def __init__(self, trades_input: (str, pd.DataFrame), tick_num_series: pd.Series, batch_size: int = 2e7,

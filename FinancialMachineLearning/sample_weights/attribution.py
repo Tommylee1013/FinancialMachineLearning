@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 from FinancialMachineLearning.features.concurrency import concurrent_events, average_uniqueness_triple_barrier
-from FinancialMachineLearning.multiprocess.multiprocess import mp_pandas_obj
+from FinancialMachineLearning.utils.multiprocess import mp_pandas_obj
 
 def _apply_weight_by_return(label_endtime, num_conc_events, close_series, molecule):
     ret = np.log(close_series).diff()

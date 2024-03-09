@@ -1,6 +1,6 @@
 import pandas as pd
 from FinancialMachineLearning.regime_change.supremum_adf import beta
-from FinancialMachineLearning.multiprocess.multiprocess import mp_pandas_obj
+from FinancialMachineLearning.utils.multiprocess import mp_pandas_obj
 
 def chow_type_adf(series: pd.Series, molecule: list) -> pd.Series:
     dfc_series = pd.Series(index=molecule)

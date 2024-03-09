@@ -1,7 +1,7 @@
 from typing import Union, Tuple
 import pandas as pd
 import numpy as np
-from FinancialMachineLearning.multiprocess.multiprocess import mp_pandas_obj
+from FinancialMachineLearning.utils.multiprocess import mp_pandas_obj
 
 def supremum_adf_test(X: pd.DataFrame, y: pd.DataFrame, min_length: int) -> float:
     start_points, bsadf = range(0, y.shape[0] - min_length + 1), -np.inf

@@ -2,7 +2,8 @@ import numpy as np
 import pandas as pd
 from scipy.linalg import block_diag
 from sklearn.utils import check_random_state
-
+from scipy.linalg import block_diag
+from FinancialMachineLearning.utils.stats import *
 
 def get_covariance_sub(
         nObs, nCols, sigma, random_state=None
@@ -46,13 +47,6 @@ def get_random_block_covariance(
     return cov
 
 
-def covariance_to_correlation(cov):
-    std = np.sqrt(np.diag(cov))
-    corr = cov / np.outer(std, std)
-    corr[corr < -1], corr[corr > 1] = -1, 1
-    return corr
-
-
 def get_random_block_correlation(
         nCols, nBlocks, random_state=None, minBlockSize=1
 ):
@@ -75,3 +69,20 @@ def get_random_block_correlation(
     corr0 = covariance_to_correlation(cov0)
     corr0 = pd.DataFrame(corr0)
     return corr0
+
+def formBlockMatrix(nBlocks, bSize, bCorr):
+    block = np.ones((bSize, bSize)) * bCorr
+    block[range(bSize), range(bSize)] = 1
+    corr = block_diag(*([block] * nBlocks))
+    return corr
+
+def formTrueMatrix(nBlocks, bSize, bCorr):
+    corr0 = formBlockMatrix(nBlocks, bSize, bCorr)
+    corr0 = pd.DataFrame(corr0)
+    cols = corr0.columns.tolist()
+    np.random.shuffle(cols)
+    corr0 = corr0[cols].loc[cols].copy(deep = True)
+    std0 = np.random.uniform(.05, .2, corr0.shape[0])
+    cov0 = correlation_to_covariance(corr0, std0)
+    mu0 = np.random.normal(std0, std0, cov0.shape[0]).reshape(-1, 1)
+    return mu0, cov0

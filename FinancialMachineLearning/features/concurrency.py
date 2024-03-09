@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from FinancialMachineLearning.multiprocess.multiprocess import mp_pandas_obj
+from FinancialMachineLearning.utils.multiprocess import mp_pandas_obj
 def concurrent_events(close_series_index, label_endtime, molecule):
     label_endtime = label_endtime.fillna(close_series_index[-1])
     label_endtime = label_endtime[label_endtime >= molecule[0]]

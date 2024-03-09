@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from FinancialMachineLearning.multiprocess.multiprocess import mp_pandas_obj
+from FinancialMachineLearning.utils.multiprocess import mp_pandas_obj
 def apply_pt_sl_on_t1(close, events, pt_sl, molecule):
     events_ = events.loc[molecule]
     out = events_[['t1']].copy(deep=True)
