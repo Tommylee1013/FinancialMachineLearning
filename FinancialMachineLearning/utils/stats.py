@@ -13,7 +13,7 @@ def correlation_to_covariance(corr, std):
     cov = corr * np.outer(std, std)
     return cov
 
-def marcenko_pastur_prob_distribution(var, q, pts) :
+def marchenko_pastur_prob_distribution(var, q, pts) :
     eMin, eMax = var * (1 - (1.0 / q) ** 0.5) ** 2, var * (1 + (1.0 / q) ** 0.5) ** 2
     eVal = np.linspace(eMin, eMax, pts)
     pdf = q / (2 * np.pi * var * eVal) * ((eMax - eVal) * (eVal - eMin)) ** 0.5
@@ -39,7 +39,7 @@ def fit_kde(obs, bWidth = 0.25, kernel = 'gaussian', x = None) :
 
 def pdf_error(var, eVal, q, bWidth, pts = 1000, verbose = False) :
     var = var[0]
-    pdf0 = marcenko_pastur_prob_distribution(var, q, pts)  # theoretical pdf
+    pdf0 = marchenko_pastur_prob_distribution(var, q, pts)  # theoretical pdf
     pdf1 = fit_kde(eVal, bWidth, x=pdf0.index.values)  # empirical pdf
     sse = np.sum((pdf1 - pdf0) ** 2)
     if verbose : print("sse:" + str(sse))
